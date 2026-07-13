@@ -104,6 +104,18 @@
       border-radius: 10px;
       background: #fff;
       box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+      overflow-x: auto;
+    }
+    .coupon-table-wrap > table.data-table {
+      width: 100% !important;
+      min-width: 100% !important;
+      table-layout: auto;
+    }
+    .coupon-table-wrap > table.data-table th,
+    .coupon-table-wrap > table.data-table td {
+      white-space: nowrap;
+      padding-left: 10px;
+      padding-right: 10px;
     }
     .coupon-head { background: #f5f8fe; color: #5b6577; }
     .coupon-switch {
@@ -257,7 +269,7 @@
   </style>
 </head>
 <body class="min-h-screen">
-  <div class="max-w-[1700px] mx-auto p-4 md:p-6">
+  <div class="w-full max-w-none p-4 md:p-6">
     <header class="mb-4">
       <div>
         <h1 class="text-2xl font-bold">红包管理</h1>
@@ -341,8 +353,7 @@
         { id: "campaign-view-tagverse", label: "查看发放人群-tagverse", frame: "741:6499" },
         { id: "campaign-view-list", label: "查看发放人群-列表", frame: "802:33" },
         { id: "campaign-revoke-modal", label: "活动发放撤销", frame: "812:413" },
-        { id: "campaign-log-modal", label: "活动发放日志", frame: "955:56" },
-        { id: "campaign-loop-stop-modal", label: "终止循环活动确认", frame: "990:230" }
+        { id: "campaign-log-modal", label: "活动发放日志", frame: "955:56" }
       ],
       batch: [
         { id: "batch-list", label: "04 任务批次列表", frame: "741:4814" },
@@ -488,41 +499,42 @@
             logs:[{ operator:"Tom", time:"2026-07-06 11:28", content:"全部发放任务收到终态，活动完成" }] },
           { id:"A260610002", name:"口令红包补发活动", audience:"添加5人", audienceType:"添加", audienceCount:5, mode:"普通活动 / 立即发放", deliverTime:"2026-07-06 11:20", task:"T260620002", tasks:["T260620002"], batch:"A260610002-T260620002", project:"Dana", coupons:["2002"], status:"已撤销", statuses:["已撤销"], createdAt:"2026-07-06 11:20", revokeReason:"撤销原因：名单包含已注销用户，停止继续发放",
             logs:[{ operator:"Mia", time:"2026-07-06 12:00", content:"撤销活动，未领取令牌已回收" }] },
-          { id:"A260610003-2", name:"老客特批激活活动", audience:"导入268人", audienceType:"导入", audienceCount:268, importFile:"A260610003_import.xlsx", mode:"特批活动 / 循环发放", deliverTime:"每周一 10:00", task:"T260620002", tasks:["T260620002"], batch:"A260610003-2-T260620002", project:"Dana", coupons:["1001","1001"], status:"执行中", statuses:["执行中","循环终止"], createdAt:"2026-07-06 11:20", revokeReason:"--",
-            logs:[{ operator:"Jenny", time:"2026-07-06 12:12", content:"终止后续循环，当前活动继续执行" }] },
+          { id:"A260610003-2", name:"老客特批激活活动", audience:"导入268人", audienceType:"导入", audienceCount:268, importFile:"A260610003_import.xlsx", mode:"特批活动 / 循环发放", deliverTime:"每周一 10:00", task:"T260620002", tasks:["T260620002"], batch:"A260610003-2-T260620002", project:"Dana", coupons:["1001","1001"], status:"执行中", statuses:["执行中"], createdAt:"2026-07-06 11:20", revokeReason:"--",
+            logs:[{ operator:"Jenny", time:"2026-07-06 12:12", content:"创建循环活动第2次发放" }] },
           { id:"A260610004", name:"高风险特批活动", audience:"导入268人", audienceType:"导入", audienceCount:268, importFile:"A260610004_import.xlsx", mode:"特批活动 / 立即发放", deliverTime:"待审核通过后立即发放", task:"T260620001", tasks:["T260620001"], batch:"A260610004-T260620001", project:"TW", coupons:["2001"], status:"审核拒绝", statuses:["审核拒绝"], createdAt:"2026-07-06 11:30", revokeReason:"--",
             logs:[{ operator:"Admin", time:"2026-07-06 11:45", content:"特批活动人工审核拒绝" }] }
         ],
         batches: [
           { id:"A260610001-1-T260610001", campaign:"A260610001-1", task:"T260610001", coupon:"1001,1002", issue:"126/200", status:"执行中", project:"Dana", region:"+62 [ID]", operator:"Jenny", createdAt:"2026-07-06 11:45", reason:"--",
-            logs:[{operator:"Jenny", time:"2026-07-06 11:45", content:"创建任务批次，关联活动与任务规则"}] },
+            logs:[{operator:"Jenny", time:"2026-07-06 11:45", content:"创建任务批次"}] },
           { id:"A260620001-T260610002", campaign:"A260620001", task:"T260610002", coupon:"--", issue:"45/45", status:"完成", project:"TW", region:"+91 [IN]", operator:"Jenny", createdAt:"2026-07-06 12:10", reason:"--",
             logs:[{operator:"Jenny", time:"2026-07-06 12:10", content:"批次全部收到终态，状态变更为完成"}] },
           { id:"A260610002-T260620002", campaign:"A260610002", task:"T260620002", coupon:"2002", issue:"30/120", status:"已撤销", project:"Dana", region:"+880 [BD]", operator:"Admin", createdAt:"2026-07-06 13:20", reason:"撤销原因：名单包含已注销用户",
             logs:[{operator:"Admin", time:"2026-07-06 13:20", content:"撤销任务批次，未兑换令牌已回收"}] },
-          { id:"A260610003-2-T260620002", campaign:"A260610003-2", task:"T260620002", coupon:"1001", issue:"86/200", status:"执行中", project:"Dana", region:"+62 [ID]", operator:"Jenny", createdAt:"2026-07-06 12:22", reason:"循环已终止",
+          { id:"A260610003-2-T260620002", campaign:"A260610003-2", task:"T260620002", coupon:"1001", issue:"86/200", status:"执行中", project:"Dana", region:"+62 [ID]", operator:"Jenny", createdAt:"2026-07-06 12:22", reason:"--",
             logs:[{operator:"Jenny", time:"2026-07-06 12:22", content:"创建循环活动第2次任务批次"}] },
           { id:"A260610004-T260620001", campaign:"A260610004", task:"T260620001", coupon:"2001", issue:"0/268", status:"审核拒绝", project:"TW", region:"+91 [IN]", operator:"Admin", createdAt:"2026-07-06 11:45", reason:"特批审核拒绝",
             logs:[{operator:"Admin", time:"2026-07-06 11:45", content:"特批活动审核拒绝，批次不下发"}] }
         ],
         receives: [
-          { sid:"880102", vip:"V3", project:"Dana", region:"+62 [ID]", campaign:"6月充值激活活动", task:"充50送现金", taskType:"充值", coupon:"新人户现金红包", couponType:"现金红包", batch:"A260610001-1-T260610001", condition:"充值金额 >= 50", count:1, amount:"$15", status:"已激活", receiveType:"用户领取", sent:"25-06-2026 10:23", receive:"25-06-2026 10:23", receiveDate:"2026-06-25", auditType:"自动审核", reviewer:"系统", order:"ORD2142111", useTime:"25-06-2026 10:23", reason:"--", verifyStatus:"已实名" },
-          { sid:"880103", vip:"V1", project:"TW", region:"+91 [IN]", campaign:"6月理财活动", task:"理财任务", taskType:"理财", coupon:"--", couponType:"--", batch:"A260620001-T260610002", condition:"理财30天", count:0, amount:"--", status:"待激活", receiveType:"系统发放", sent:"25-06-2026 10:23", receive:"--", receiveDate:"", auditType:"人工审核", reviewer:"Jenny", order:"--", useTime:"--", reason:"用户已有未结束同类型任务", verifyStatus:"已实名" },
-          { sid:"26070001", vip:"V4", project:"Dana", region:"+62 [ID]", campaign:"新人活动", task:"充值50送现金", taskType:"充值", coupon:"50元首充红包", couponType:"现金红包", batch:"A260620001-T260620002", condition:"充值金额 >= 50", count:1, amount:"$20", status:"已激活", receiveType:"系统发放", sent:"25-06-2026 10:23", receive:"25-06-2026 10:23", receiveDate:"2026-06-25", auditType:"人工审核", reviewer:"--", order:"--", useTime:"--", reason:"--", verifyStatus:"已实名" },
-          { sid:"26070002", vip:"V2", project:"Dana", region:"+62 [ID]", campaign:"月末冲量活动", task:"实盘2手任务", taskType:"实盘交易", coupon:"5元红包", couponType:"手续费抵扣红包", batch:"A260620010-T260620005", condition:"实盘手数 >= 2", count:1, amount:"$5", status:"已使用", receiveType:"系统发放", sent:"25-06-2026 09:45", receive:"25-06-2026 09:45", receiveDate:"2026-06-25", auditType:"人工审核", reviewer:"Jenny", order:"ORD26070002", useTime:"25-06-2026 12:40", reason:"--", verifyStatus:"已实名" },
-          { sid:"26070003", vip:"V1", project:"TW", region:"+91 [IN]", campaign:"拉新活动", task:"无任务奖励", taskType:"无任务", coupon:"8元红包", couponType:"现金红包", batch:"A260620011-T260620005", condition:"--", count:1, amount:"$8", status:"待激活", receiveType:"系统发放", sent:"25-06-2026 09:20", receive:"--", receiveDate:"", auditType:"人工审核", reviewer:"Tom", order:"--", useTime:"--", reason:"审核拒绝", verifyStatus:"已实名" }
+          { sid:"880102", vip:"V3", project:"Dana", region:"+62 [ID]", campaign:"6月充值激活活动", task:"充50送现金", taskType:"充值", coupon:"新人户现金红包", couponType:"现金红包", batch:"A260610001-1-T260610001", condition:"充值金额 >= 50", amount:"$15", status:"已激活", receiveType:"用户领取", sent:"25-06-2026 10:23", receive:"25-06-2026 10:23", receiveDate:"2026-06-25", auditType:"自动审核", reviewer:"系统", order:"ORD2142111", useTime:"25-06-2026 10:23", reason:"--", verifyStatus:"已实名" },
+          { sid:"880103", vip:"V1", project:"TW", region:"+91 [IN]", campaign:"6月理财活动", task:"理财任务", taskType:"理财", coupon:"--", couponType:"--", batch:"A260620001-T260610002", condition:"理财30天", amount:"--", status:"待激活", receiveType:"系统发放", sent:"25-06-2026 10:23", receive:"--", receiveDate:"", auditType:"人工审核", reviewer:"Jenny", order:"--", useTime:"--", reason:"用户已有未结束同类型任务", verifyStatus:"已实名" },
+          { sid:"26070001", vip:"V4", project:"Dana", region:"+62 [ID]", campaign:"新人活动", task:"充值50送现金", taskType:"充值", coupon:"50元首充红包", couponType:"现金红包", batch:"A260620001-T260620002", condition:"充值金额 >= 50", amount:"$20", status:"已激活", receiveType:"系统发放", sent:"25-06-2026 10:23", receive:"25-06-2026 10:23", receiveDate:"2026-06-25", auditType:"人工审核", reviewer:"--", order:"--", useTime:"--", reason:"--", verifyStatus:"已实名" },
+          { sid:"26070002", vip:"V2", project:"Dana", region:"+62 [ID]", campaign:"月末冲量活动", task:"实盘2手任务", taskType:"实盘交易", coupon:"5元手续费抵扣券", couponType:"手续费抵扣红包", batch:"A260620010-T260620005", condition:"实盘手数 >= 2", amount:"$5", status:"已使用", receiveType:"系统发放", sent:"25-06-2026 09:45", receive:"25-06-2026 09:45", receiveDate:"2026-06-25", auditType:"人工审核", reviewer:"Jenny", order:"ORD26070002", useTime:"25-06-2026 12:40", reason:"--", verifyStatus:"已实名" },
+          { sid:"26070003", vip:"V1", project:"TW", region:"+91 [IN]", campaign:"拉新活动", task:"无任务奖励", taskType:"无任务", coupon:"8元盈亏抵扣红包", couponType:"盈亏抵扣红包", batch:"A260620011-T260620005", condition:"--", amount:"$8", status:"待激活", receiveType:"系统发放", sent:"25-06-2026 09:20", receive:"--", receiveDate:"", auditType:"人工审核", reviewer:"Tom", order:"--", useTime:"--", reason:"审核拒绝", verifyStatus:"已实名" },
+          { sid:"26070004", vip:"V5", project:"Dana", region:"+880 [BD]", campaign:"提现促活活动", task:"无任务奖励", taskType:"无任务", coupon:"提现免佣券", couponType:"提现免佣券", batch:"A260620012-T260620006", condition:"--", amount:"$3", status:"待激活", receiveType:"运营补发", sent:"25-06-2026 11:10", receive:"--", receiveDate:"", auditType:"自动审核", reviewer:"系统", order:"--", useTime:"--", reason:"--", verifyStatus:"已实名" }
         ],
         usages: [
-          { sid:"880102", vip:"V3", project:"Dana", region:"+62 [ID]", campaign:"6月充值激活活动", task:"充50送现金", taskType:"充值", couponId:"1001", coupon:"新人户现金红包", couponType:"现金红包", batch:"A260610001-1-T260610001", condition:"充值金额 >= 50", order:"ORD2142111", amount:"$10", deduct:"$8", deductType:"金额抵扣", rewardTime:"25-06-2026 10:23", useTime:"25-06-2026 10:23", useDate:"2026-06-25", status:"自动审核", verifyStatus:"已实名" },
-          { sid:"880103", vip:"V1", project:"TW", region:"+91 [IN]", campaign:"6月理财活动", task:"理财任务", taskType:"理财", couponId:"--", coupon:"--", couponType:"--", batch:"A260620001-T260610002", condition:"理财30天", order:"ORD16005", amount:"20", deduct:"15", deductType:"比例抵扣", rewardTime:"25-06-2026 10:23", useTime:"25-06-2026 10:23", useDate:"2026-06-25", status:"人工审核", verifyStatus:"已实名" },
-          { sid:"26070002", vip:"V2", project:"Dana", region:"+62 [ID]", campaign:"月末冲量活动", task:"实盘2手任务", taskType:"实盘交易", couponId:"2001", coupon:"5元红包", couponType:"手续费抵扣红包", batch:"A260620010-T260620005", condition:"实盘手数 >= 2", order:"ORD26070002", amount:"$5", deduct:"$5", deductType:"金额抵扣", rewardTime:"25-06-2026 09:45", useTime:"25-06-2026 12:40", useDate:"2026-06-25", status:"人工审核", verifyStatus:"已实名" }
+          { sid:"880102", vip:"V3", project:"Dana", region:"+62 [ID]", campaign:"6月充值激活活动", task:"充50送现金", taskType:"充值", couponId:"1001", coupon:"新人户现金红包", couponType:"现金红包", batch:"A260610001-1-T260610001", condition:"充值金额 >= 50", order:"ORD2142111", amount:"$10", deduct:"$8", deductType:"金额封顶", rewardTime:"25-06-2026 10:23", useTime:"25-06-2026 10:23", useDate:"2026-06-25", status:"自动审核", verifyStatus:"已实名" },
+          { sid:"880103", vip:"V1", project:"TW", region:"+91 [IN]", campaign:"6月理财活动", task:"理财任务", taskType:"理财", couponId:"--", coupon:"--", couponType:"--", batch:"A260620001-T260610002", condition:"理财30天", order:"ORD16005", amount:"20", deduct:"15", deductType:"比例封顶", rewardTime:"25-06-2026 10:23", useTime:"25-06-2026 10:23", useDate:"2026-06-25", status:"人工审核", verifyStatus:"已实名" },
+          { sid:"26070002", vip:"V2", project:"Dana", region:"+62 [ID]", campaign:"月末冲量活动", task:"实盘2手任务", taskType:"实盘交易", couponId:"2001", coupon:"5元红包", couponType:"手续费抵扣红包", batch:"A260620010-T260620005", condition:"实盘手数 >= 2", order:"ORD26070002", amount:"$5", deduct:"$5", deductType:"金额封顶", rewardTime:"25-06-2026 09:45", useTime:"25-06-2026 12:40", useDate:"2026-06-25", status:"人工审核", verifyStatus:"已实名" }
         ],
         audits: [
           { rid:"R1", type:"红包发放", sid:"26070001", object:"26070001", activity:"A260620001", batch:"A260620001-T260620002", coupon:"50元首充红包", redPacketCount:23, dailyCustomCount:1, users:1, amount:"$20", trigger:"用户红包拥有数量超过20", status:"待审核", apply:"25-06-2026 10:23", reviewer:"--", reviewTime:"--", operator:"Mia" },
           { rid:"R2", type:"自定义红包", object:"A260620002-T260620001", activity:"A260620002", activityName:"单人补发", batch:"A260620002-T260620001", coupon:"单人红包", singleAmount:"$120", dailyAmount:"$14,000", dailyCount:120, users:120, amount:"$14,000", trigger:"单个自定义红包金额 > $100", status:"待审核", apply:"25-06-2026 10:30", reviewer:"--", reviewTime:"--", operator:"--" },
           { rid:"R3", type:"特批活动", object:"A260620003", activity:"A260620003", activityName:"补偿活动", activityKind:"特批活动", audience:"导入名单", batchCount:1, expectedUsers:268, expectedAmount:"$80,000", approvalReason:"高价值客户补偿，需要人工审核确认。", batch:"A260620003-T260620001", coupon:"10元首充红包", users:268, amount:"$80,000", trigger:"特批活动创建后进入人工审核", status:"待审核", apply:"25-06-2026 11:05", reviewer:"--", reviewTime:"--", operator:"--" },
           { rid:"R4", type:"红包发放", sid:"26070002", object:"26070002", activity:"A260620010", batch:"A260620010-T260620005", coupon:"5元红包", redPacketCount:12, dailyCustomCount:1, users:45, amount:"$5,040", trigger:"单个用户当日已领自定义红包 >= 1张", status:"审核通过", apply:"25-06-2026 09:45", reviewer:"Jenny", reviewTime:"25-06-2026 09:52", operator:"Jenny" },
-          { rid:"R5", type:"红包发放", sid:"26070003", object:"26070003", activity:"A260620011", batch:"A260620011-T260620005", coupon:"8元红包", redPacketCount:8, dailyCustomCount:0, users:33, amount:"$2,640", trigger:"库存临界", status:"审核拒绝", apply:"25-06-2026 09:20", reviewer:"Tom", reviewTime:"25-06-2026 09:25", auditOpinion:"库存不足，暂不允许继续发放。", operator:"Tom" }
+          { rid:"R5", type:"红包发放", sid:"26070003", object:"26070003", activity:"A260620011", batch:"A260620011-T260620005", coupon:"8元红包", redPacketCount:21, dailyCustomCount:0, users:33, amount:"$2,640", trigger:"用户红包拥有数量超过20", status:"审核拒绝", apply:"25-06-2026 09:20", reviewer:"Tom", reviewTime:"25-06-2026 09:25", auditOpinion:"用户持有红包数量已超过发放限制，暂不允许继续发放。", operator:"Tom" }
         ]
       }
     };
@@ -882,7 +894,7 @@
         status: row.status,
         project: row.project,
         reason: "--",
-        logs: [{ operator:"Jenny", time:nowStamp(), content:"创建任务批次，关联活动与任务规则" }]
+        logs: [{ operator:"Jenny", time:nowStamp(), content:"创建任务批次" }]
       });
       return row;
     }
@@ -1266,11 +1278,10 @@
           <div class="mb-4 text-[#64748b]">当前红包：${couponId || "--"} ${coupon?.name || ""}</div>
           <label class="form-label required mb-1">红包标题</label>
           <input id="taskCouponTitleInput" class="w-full border border-line rounded px-3 py-2 mb-4 ${readonly ? "bg-gray-50 text-[#475569]" : ""}" value="${current.title || ""}" placeholder="You received a {amount} cash coupon" ${readonly ? "disabled" : ""}>
-          <div class="mb-4 text-[12px] text-[#b7791f]">{amount}：红包金额参数；用户端会根据实际收到的任务和红包组合展示。</div>
+          ${readonly ? "" : `<div class="mb-4 text-[12px] text-[#b7791f]">{amount}：红包金额参数；用户端会根据实际收到的任务和红包组合展示。</div>`}
           <label class="form-label required mb-1">任务描述</label>
           <textarea id="taskCouponDescInput" class="w-full min-h-[108px] border border-line rounded px-3 py-2 ${readonly ? "bg-gray-50 text-[#475569]" : ""}" placeholder="You must first complete the 3-way trade." ${readonly ? "disabled" : ""}>${current.desc || ""}</textarea>
-          <div class="mt-3 text-[12px] leading-5 text-[#b7791f]">{number}：实盘交易任务参数；{count}：充值金额任务参数；<br>{days}：理财时长参数；{rate}：理财年化收益参数；{deposit}：最低存款金额参数；</div>
-          <div class="text-[12px] text-[#64748b] mt-1">这里保存的是当前任务内该红包组合的文案副本，不会影响红包模板或任务模板。</div>
+          ${readonly ? "" : `<div class="mt-3 text-[12px] leading-5 text-[#b7791f]">{number}：实盘交易任务参数；{count}：充值金额任务参数；<br>{days}：理财时长参数；{rate}：理财年化收益参数；{deposit}：最低存款金额参数；</div><div class="text-[12px] text-[#64748b] mt-1">这里保存的是当前任务内该红包组合的文案副本，不会影响红包模板或任务模板。</div>`}
         </div>
       </div>`;
       host.querySelector(".stacked-modal-footer").innerHTML = readonly
@@ -1706,7 +1717,7 @@
           <table class="w-full data-table text-[12px] min-w-[1520px]">
             <thead class="coupon-head"><tr class="border-b border-line"><th class="text-left px-3 py-2">红包ID</th><th class="text-left px-3 py-2">项目</th><th class="text-left px-3 py-2">红包类型</th><th class="text-left px-3 py-2">红包名称</th><th class="text-left px-3 py-2">红包金额</th><th class="text-left px-3 py-2">${couponValidityLabel()}</th><th class="text-left px-3 py-2">总发行/领取</th><th class="text-left px-3 py-2">状态</th><th class="text-left px-3 py-2">启用/禁用</th><th class="text-left px-3 py-2">操作</th></tr></thead>
             <tbody>
-              ${rows.map(r => `<tr class="border-b border-line/60 hover:bg-[#f8fbff]"><td class="px-3 py-2 font-medium text-[#2f3a4d]">${r.id}</td><td class="px-3 py-2">${r.project}</td><td class="px-3 py-2">${r.type}</td><td class="px-3 py-2">${r.name}</td><td class="px-3 py-2">${r.amount}</td><td class="px-3 py-2">${couponValidityValue(couponValidityWithId(r.id, `领取后${r.validDays || 7}天`))}</td><td class="px-3 py-2">${r.totalIssue} / ${r.totalReceive}</td><td class="px-3 py-2"><span class="${r.enabled ? "badge badge-ok" : "badge badge-neutral"}">${r.status}</span></td><td class="px-3 py-2"><button class="coupon-switch ${r.enabled ? "on" : "off"}" data-coupon-toggle="${r.id}"></button></td><td class="px-3 py-2"><div class="flex items-center gap-2"><button class="icon-action-btn" title="编辑" data-coupon-edit="${r.id}">${iconSvg("edit")}</button><button class="icon-action-btn" title="复制" data-coupon-copy="${r.id}">${iconSvg("copy")}</button><button class="icon-action-btn" title="日志" data-coupon-log="${r.id}">${iconSvg("log")}</button></div></td></tr>`).join("")}
+              ${rows.map(r => `<tr class="border-b border-line/60 hover:bg-[#f8fbff]"><td class="px-3 py-2 font-medium text-[#2f3a4d]">${r.id}</td><td class="px-3 py-2">${r.project}</td><td class="px-3 py-2">${r.type}</td><td class="px-3 py-2">${r.name}</td><td class="px-3 py-2">${r.amount}</td><td class="px-3 py-2">${couponValidityValue(`领取后${r.validDays || 7}天`)}</td><td class="px-3 py-2">${r.totalIssue} / ${r.totalReceive}</td><td class="px-3 py-2"><span class="${r.enabled ? "badge badge-ok" : "badge badge-neutral"}">${r.status}</span></td><td class="px-3 py-2"><button class="coupon-switch ${r.enabled ? "on" : "off"}" data-coupon-toggle="${r.id}"></button></td><td class="px-3 py-2"><div class="flex items-center gap-2"><button class="icon-action-btn" title="编辑" data-coupon-edit="${r.id}">${iconSvg("edit")}</button><button class="icon-action-btn" title="复制" data-coupon-copy="${r.id}">${iconSvg("copy")}</button><button class="icon-action-btn" title="日志" data-coupon-log="${r.id}">${iconSvg("log")}</button></div></td></tr>`).join("")}
             </tbody>
           </table>
         </div>
@@ -1715,7 +1726,7 @@
 
     function renderCampaignRecord() {
       const f = state.filters.campaign;
-      const statusOptions = ["待审核","执行中","完成","已撤销","循环终止","审核拒绝"];
+      const statusOptions = ["待审核","执行中","完成","已撤销","审核拒绝"];
       let rows = state.data.campaigns.filter(r =>
         (!f.id || [r.id, r.batch, ...campaignTaskIds(r), ...(r.coupons || [])].some(v => String(v || "").includes(f.id))) &&
         (!f.name || campaignTaskNames(r).includes(f.name) || r.name.includes(f.name)) &&
@@ -1770,11 +1781,10 @@
                   <td class="px-3 py-2">${r.project || "--"}</td>
                   <td class="px-3 py-2"><div class="flex flex-wrap gap-1">${campaignStatuses(r).map(s => badge(s)).join("")}</div></td>
                   <td class="px-3 py-2">${formatDisplayTime(r.createdAt)}</td>
-                  <td class="px-3 py-2"><div class="flex items-center gap-2">
+                  <td class="px-3 py-2"><div class="flex items-center gap-2 min-w-[136px]">
                     <button class="icon-action-btn" title="查看详情" data-campaign-detail="${r.id}">${iconSvg("view")}</button>
                     <button class="icon-action-btn" title="复制" data-campaign-copy="${r.id}">${iconSvg("copy")}</button>
-                    <button class="icon-action-btn ${(!String(r.mode || "").includes("循环") || campaignStatuses(r).includes("循环终止")) ? "opacity-40 cursor-not-allowed" : ""}" title="终止" data-campaign-stop="${r.id}" ${(!String(r.mode || "").includes("循环") || campaignStatuses(r).includes("循环终止")) ? "disabled" : ""}>${iconSvg("stop")}</button>
-                    <button class="icon-action-btn danger ${campaignStatuses(r).includes("已撤销") ? "opacity-40 cursor-not-allowed" : ""}" title="撤销" data-campaign-revoke="${r.id}" ${campaignStatuses(r).includes("已撤销") ? "disabled" : ""}>${iconSvg("revoke")}</button>
+                    <button class="icon-action-btn danger ${["完成","已撤销","审核拒绝"].includes(r.status) ? "opacity-40 cursor-not-allowed" : ""}" title="撤销" data-campaign-revoke="${r.id}" ${["完成","已撤销","审核拒绝"].includes(r.status) ? "disabled" : ""}>${iconSvg("revoke")}</button>
                     <button class="icon-action-btn" title="日志" data-campaign-log="${r.id}">${iconSvg("log")}</button>
                   </div></td>
                 </tr>
@@ -1798,10 +1808,10 @@
           <button id="btnOpenTagVerse" class="h-8 px-3 rounded border border-line bg-white text-primary text-[12px] hover:bg-[#f8fbff] whitespace-nowrap justify-self-start">创建TagVerse</button>
         </div>
       ` : d.audienceType === "导入" ? `
-        <div class="col-span-5 grid grid-cols-[1fr_220px_160px] gap-3 items-center">
-          <input id="fImportFileName" class="border border-line rounded px-2 py-2 bg-gray-50" value="${d.importedFileName || "未选择文件"}" disabled>
-          <button id="btnImportList" class="${btnClass(true,true)}">导入名单</button>
-          <button id="btnViewImportFailures" class="${btnClass(false, (d.importFailures || []).length > 0)}">失败数据 ${(d.importFailures || []).length}</button>
+        <div class="col-span-5 flex items-center justify-start gap-2">
+          <input id="fImportFileName" class="w-[260px] border border-line rounded px-2 py-2 bg-gray-50" value="${d.importedFileName || "未选择文件"}" disabled>
+          <button id="btnImportList" class="h-8 px-4 rounded bg-primary text-white text-[12px] font-semibold hover:bg-primary-dark whitespace-nowrap shrink-0">导入名单</button>
+          <button id="btnViewImportFailures" class="h-8 px-3 rounded border border-line bg-white text-[12px] whitespace-nowrap shrink-0 ${(d.importFailures || []).length > 0 ? "text-primary hover:bg-[#f8fbff]" : "text-[#94a3b8] btn-disabled"}">失败数据 ${(d.importFailures || []).length}</button>
         </div>
       ` : `
         <div class="col-span-5 grid grid-cols-[1fr_auto_260px_1fr] gap-3 items-center">
@@ -1811,7 +1821,7 @@
           <input id="fTagVerseName" class="border border-line rounded px-2 py-2 ${d.saveAsTagVerse ? "" : "bg-gray-50 text-[#94a3b8]"}" placeholder="新TagVerse名称" value="${d.tagVerseName || ""}" ${d.saveAsTagVerse ? "" : "disabled"}>
         </div>
         <div class="col-span-5 border border-line rounded overflow-auto">
-          <table class="w-full text-[12px]"><thead class="bg-[#f3f6fb]"><tr><th class="text-left px-3 py-2">SID</th><th class="text-left px-3 py-2">状态</th><th class="text-left px-3 py-2">操作</th></tr></thead><tbody>${(d.sidList || []).map((sid, idx) => `<tr class="border-t border-line"><td class="px-3 py-2">${sid}</td><td class="px-3 py-2">${badge("有效")}</td><td class="px-3 py-2"><button class="text-danger hover:underline" data-remove-campaign-sid="${idx}">删除</button></td></tr>`).join("") || `<tr><td class="px-3 py-4 text-muted" colspan="3">暂未添加SID</td></tr>`}</tbody></table>
+          <table class="w-full text-[12px]"><thead class="bg-[#f3f6fb]"><tr><th class="text-left px-3 py-2">SID</th><th class="text-left px-3 py-2">操作</th></tr></thead><tbody>${(d.sidList || []).map((sid, idx) => `<tr class="border-t border-line"><td class="px-3 py-2">${sid}</td><td class="px-3 py-2"><button class="text-danger hover:underline" data-remove-campaign-sid="${idx}">删除</button></td></tr>`).join("") || `<tr><td class="px-3 py-4 text-muted" colspan="2">暂未添加SID</td></tr>`}</tbody></table>
         </div>
       `;
       const deliverExtra = d.deliverType === "定时发放" ? `
@@ -1971,7 +1981,6 @@
         </div>
         <div class="py-6 flex justify-center gap-3">
           <button id="btnCampaignDetailBack" class="${btnClass(false,true)}">返回</button>
-          <button id="btnCampaignDetailStop" class="${btnClass(false,true)}">终止</button>
           <button id="btnCampaignDetailRevoke" class="${btnClass(false,true)}">撤销</button>
           <button id="btnCampaignDetailCopy" class="${btnClass(true,true)}">复制</button>
         </div>
@@ -2157,9 +2166,9 @@
       el.action.innerHTML = `<div class="flex gap-2"><button class="${btnClass(false,true)}" title="导出数据量需在 1w ，数据量过大会导致系统崩溃">导出</button><button class="${btnClass(false,true)}">EDM名单</button></div>`;
       el.table.innerHTML = !rows.length ? `<div class="border border-dashed border-line rounded p-12 text-center text-sm text-muted">暂无领取记录</div>` : `
         <div class="coupon-table-wrap overflow-auto">
-          <table class="w-full data-table text-[12px] min-w-[1800px]">
-            <thead class="coupon-head"><tr class="border-b border-line"><th class="text-left px-3 py-2">SID</th><th class="text-left px-3 py-2">VIP</th><th class="text-left px-3 py-2">项目</th><th class="text-left px-3 py-2">地区</th><th class="text-left px-3 py-2">活动名称</th><th class="text-left px-3 py-2">红包名称</th><th class="text-left px-3 py-2">任务名称</th><th class="text-left px-3 py-2">红包批次</th><th class="text-left px-3 py-2">任务条件</th><th class="text-left px-3 py-2">红包数量</th><th class="text-left px-3 py-2">红包金额</th><th class="text-left px-3 py-2">红包状态</th><th class="text-left px-3 py-2">领取方式</th><th class="text-left px-3 py-2">领取时间</th><th class="text-left px-3 py-2">审核方式</th><th class="text-left px-3 py-2">审核人</th><th class="text-left px-3 py-2">使用时间</th></tr></thead>
-            <tbody>${rows.map(r => `<tr class="border-b border-line/60 hover:bg-[#f8fbff]"><td class="px-3 py-2"><a class="text-primary hover:underline" data-nav="${makeNav("receive","user-coupon-detail","user","sid",r.sid)}">${r.sid}</a></td><td class="px-3 py-2">${r.vip}</td><td class="px-3 py-2">${r.project}</td><td class="px-3 py-2">${r.region}</td><td class="px-3 py-2">${r.campaign}</td><td class="px-3 py-2">${linkedCouponName(r.coupon)}</td><td class="px-3 py-2">${linkedTaskName(r.task, r.batch)}</td><td class="px-3 py-2"><a class="text-primary hover:underline" data-nav="${makeNav("batch","batch-detail","batch","id",r.batch)}">${r.batch}</a></td><td class="px-3 py-2">${r.condition}</td><td class="px-3 py-2">${r.count}</td><td class="px-3 py-2">${r.amount}</td><td class="px-3 py-2">${badge(r.status)}</td><td class="px-3 py-2">${r.receiveType}</td><td class="px-3 py-2">${formatDisplayTime(r.receive)}</td><td class="px-3 py-2">${r.auditType}</td><td class="px-3 py-2">${r.reviewer}</td><td class="px-3 py-2">${formatDisplayTime(r.useTime)}</td></tr>`).join("")}</tbody>
+          <table class="w-full data-table text-[12px] min-w-[1840px]">
+            <thead class="coupon-head"><tr class="border-b border-line"><th class="text-left px-3 py-2 min-w-[90px]">SID</th><th class="text-left px-3 py-2 min-w-[64px]">VIP</th><th class="text-left px-3 py-2 min-w-[80px]">项目</th><th class="text-left px-3 py-2 min-w-[90px]">地区</th><th class="text-left px-3 py-2 min-w-[150px]">活动名称</th><th class="text-left px-3 py-2 min-w-[140px]">红包名称</th><th class="text-left px-3 py-2 min-w-[130px]">任务名称</th><th class="text-left px-3 py-2 min-w-[220px]">任务批次</th><th class="text-left px-3 py-2 min-w-[130px]">任务条件</th><th class="text-left px-3 py-2 min-w-[130px]">红包类型</th><th class="text-left px-3 py-2 min-w-[96px]">红包金额</th><th class="text-left px-3 py-2 min-w-[96px]">红包状态</th><th class="text-left px-3 py-2 min-w-[100px]">领取方式</th><th class="text-left px-3 py-2 min-w-[140px]">领取时间</th><th class="text-left px-3 py-2 min-w-[100px]">审核方式</th><th class="text-left px-3 py-2 min-w-[90px]">审核人</th><th class="text-left px-3 py-2 min-w-[140px]">使用时间</th></tr></thead>
+            <tbody>${rows.map(r => `<tr class="border-b border-line/60 hover:bg-[#f8fbff]"><td class="px-3 py-2 whitespace-nowrap"><a class="text-primary hover:underline" data-nav="${makeNav("receive","user-coupon-detail","user","sid",r.sid)}">${r.sid}</a></td><td class="px-3 py-2 whitespace-nowrap">${r.vip}</td><td class="px-3 py-2 whitespace-nowrap">${r.project}</td><td class="px-3 py-2 whitespace-nowrap">${r.region}</td><td class="px-3 py-2">${r.campaign}</td><td class="px-3 py-2">${linkedCouponName(r.coupon)}</td><td class="px-3 py-2">${linkedTaskName(r.task, r.batch)}</td><td class="px-3 py-2 whitespace-nowrap"><a class="text-primary hover:underline" title="查看任务批次详情" data-nav="${makeNav("batch","batch-detail","batch","id",r.batch)}">${r.batch}</a></td><td class="px-3 py-2">${r.condition}</td><td class="px-3 py-2 whitespace-nowrap">${r.couponType}</td><td class="px-3 py-2 whitespace-nowrap">${r.amount}</td><td class="px-3 py-2 whitespace-nowrap">${badge(r.status)}</td><td class="px-3 py-2 whitespace-nowrap">${r.receiveType}</td><td class="px-3 py-2 whitespace-nowrap">${formatDisplayTime(r.receive)}</td><td class="px-3 py-2 whitespace-nowrap">${r.auditType}</td><td class="px-3 py-2 whitespace-nowrap">${r.reviewer}</td><td class="px-3 py-2 whitespace-nowrap">${formatDisplayTime(r.useTime)}</td></tr>`).join("")}</tbody>
           </table>
         </div>
       `;
@@ -2423,7 +2432,7 @@
                           const quantityCell = isNoTask
                             ? `<div class="inline-flex items-center border border-line rounded overflow-hidden"><button class="w-7 h-7 hover:bg-gray-50" data-task-coupon-dec="${id}">-</button><span class="w-8 text-center border-x border-line">${count}</span><button class="w-7 h-7 hover:bg-gray-50" data-task-coupon-inc="${id}">+</button></div>`
                             : `<span class="inline-flex items-center justify-center w-8 h-7 rounded border border-line bg-gray-50 text-[#475569]">1</span>`;
-                          return `<tr class="border-t border-line"><td class="px-3 py-2">${id}</td><td class="px-3 py-2">${c?.name || "未匹配红包"}</td><td class="px-3 py-2">${c?.type || "--"}</td><td class="px-3 py-2">${c?.amount || "--"}</td><td class="px-3 py-2">${couponValidityValue(c ? couponValidityWithId(id, `领取后${c.validDays || 7}天`) : "--")}</td><td class="px-3 py-2">${quantityCell}</td><td class="px-3 py-2"><button class="${btnClass(true,true)}" data-task-coupon-config="${id}">查看配置</button></td><td class="px-3 py-2"><button class="text-primary hover:underline" data-task-coupon-remove="${id}">移除</button></td></tr>`;
+                          return `<tr class="border-t border-line"><td class="px-3 py-2">${id}</td><td class="px-3 py-2">${c?.name || "未匹配红包"}</td><td class="px-3 py-2">${c?.type || "--"}</td><td class="px-3 py-2">${c?.amount || "--"}</td><td class="px-3 py-2">${couponValidityValue(c ? `领取后${c.validDays || 7}天` : "--")}</td><td class="px-3 py-2">${quantityCell}</td><td class="px-3 py-2"><button class="${btnClass(true,true)}" data-task-coupon-config="${id}">查看配置</button></td><td class="px-3 py-2"><button class="text-primary hover:underline" data-task-coupon-remove="${id}">移除</button></td></tr>`;
                         }).join("") || `<tr><td class="px-3 py-4 text-muted" colspan="8">暂未添加红包</td></tr>`}</tbody>
                       </table>
                     </div>
@@ -2536,7 +2545,7 @@
         });
       } else if (pageId === "campaign-revoke-modal") {
         const row = state.data.campaigns.find(x => x.id === state.selectedCampaignId);
-        openModal({ title: "撤销活动发放", body: `<div class="flex gap-4 items-start text-[14px]"><div class="w-12 h-12 rounded-full border border-[#f59e0b] text-[#f59e0b] flex items-center justify-center text-2xl shrink-0">!</div><div class="space-y-3 flex-1"><div class="text-[22px] font-semibold">确认撤销该活动发放？</div><p class="text-[#64748b]">撤销后，该活动及相关任务批次的状态将变更为「已撤销」。</p><p class="text-[#64748b]">各批次中未兑换的令牌全部回收，已兑换令牌不回收；后续未完成发放的令牌不再继续发放。</p><div class="grid grid-cols-2 gap-3 text-[13px] pt-2"><div>活动ID：<span class="font-semibold">${row?.id || "--"}</span></div><div>活动名称：<span class="font-semibold">${row?.name || "--"}</span></div></div><textarea id="revokeReason" class="w-full border border-line rounded px-3 py-2" rows="3" placeholder="请填写撤销原因"></textarea></div></div>`, footer: `<button class="${btnClass(false,true)}" data-close-modal>取消</button><button id="confirmCampaignRevoke" class="h-9 px-5 rounded bg-[#dc2626] text-white font-semibold whitespace-nowrap shrink-0">确认撤销</button>` });
+        openModal({ title: "撤销活动确认", body: `<div class="flex gap-4 items-start text-[14px]"><div class="w-12 h-12 rounded-full border border-[#f59e0b] text-[#f59e0b] flex items-center justify-center text-2xl shrink-0">!</div><div class="space-y-3 flex-1"><div class="text-[22px] font-semibold">确认撤销该活动吗？</div><p class="text-[#64748b]">若为循环活动，将同时撤销当前批次并终止整个循环，后续批次将不再生成。已发放且已激活的红包不会被回收。</p><div class="grid grid-cols-2 gap-3 text-[13px] pt-2"><div>活动ID：<span class="font-semibold">${row?.id || "--"}</span></div><div>活动名称：<span class="font-semibold">${row?.name || "--"}</span></div></div><textarea id="revokeReason" class="w-full border border-line rounded px-3 py-2" rows="3" placeholder="请填写撤销原因"></textarea></div></div>`, footer: `<button class="${btnClass(false,true)}" data-close-modal>取消</button><button id="confirmCampaignRevoke" class="h-9 px-5 rounded bg-[#dc2626] text-white font-semibold whitespace-nowrap shrink-0">确认撤销</button>` });
       } else if (pageId === "batch-revoke-modal") {
         const row = state.data.batches.find(x => x.id === state.selectedBatchId) || state.data.batches[0];
         openModal({ title: "撤销任务批次", body: `<div class="flex gap-4 items-start text-[14px]"><div class="w-12 h-12 rounded-full border border-[#f59e0b] text-[#f59e0b] flex items-center justify-center text-2xl shrink-0">!</div><div class="space-y-3 flex-1"><div class="text-[22px] font-semibold">确认撤销该任务批次？</div><p class="text-[#64748b]">批次撤销仅作用于当前任务批次，不影响同一活动下其他批次。</p><p class="text-[#64748b]">确认撤销后，该批次中未兑换的令牌全部回收，已兑换令牌不回收；该批次状态变为「已撤销」。</p><div class="grid grid-cols-2 gap-3 text-[13px] pt-2"><div>任务批次：<span class="font-semibold">${row.id}</span></div><div>任务名称：<span class="font-semibold">${batchTask(row).name || "--"}</span></div></div><textarea id="batchRevokeReason" class="w-full border border-line rounded px-3 py-2" rows="3" placeholder="请填写撤销原因"></textarea></div></div>`, footer: `<button class="${btnClass(false,true)}" data-close-modal>取消</button><button id="confirmBatchRevoke" class="h-9 px-5 rounded bg-[#dc2626] text-white font-semibold whitespace-nowrap shrink-0">确认撤销</button>` });
@@ -2612,9 +2621,6 @@
           </div>`,
           footer: `<button id="btnDownloadTagVerse" class="${btnClass(false,true)}">下载</button><button class="${btnClass(false,true)}" data-close-modal>关闭</button>`
         });
-      } else if (pageId === "campaign-loop-stop-modal") {
-        const row = state.data.campaigns.find(x => x.id === state.selectedCampaignId);
-        openModal({ title: "终止循环活动确认", body: `<div class="space-y-5 text-[14px]"><div class="rounded border border-[#facc15] bg-[#fff8e1] px-4 py-3 text-[#92400e] font-medium">确认终止该循环活动？终止后仅停止未来循环活动生成/发放，不影响当前活动，当前活动将继续执行。</div><div class="grid grid-cols-2 gap-6 text-[16px]"><div>活动ID：<span class="font-semibold">${row?.id || "--"}</span></div><div>活动名称：<span class="font-semibold">${row?.name || "--"}</span></div></div></div>`, footer: `<button class="${btnClass(false,true)}" data-close-modal>取消</button><button id="confirmLoopStop" class="${btnClass(true,true)}">确认终止</button>` });
       } else if (pageId === "audit-batch-modal") {
         openModal({ title: "批量审核弹窗", body: `<div class="space-y-2 text-[12px]"><div class="max-h-[240px] overflow-auto border border-line rounded"><table class="w-full text-[12px]"><thead class="bg-[#f8faff]"><tr><th class="text-left px-2 py-1">审核类型</th><th class="text-left px-2 py-1">审核对象</th><th class="text-left px-2 py-1">金额</th><th class="text-left px-2 py-1">触发原因</th></tr></thead><tbody>${state.data.audits.filter(x => state.selectedRows.has(x.rid)).map(x => `<tr class="border-t border-line"><td class="px-2 py-1">${x.type}</td><td class="px-2 py-1">${x.object}</td><td class="px-2 py-1">${x.amount}</td><td class="px-2 py-1">${x.trigger}</td></tr>`).join("") || `<tr><td class="px-2 py-3 text-muted" colspan="4">未选择审核记录</td></tr>`}</tbody></table></div><label class="text-xs text-muted block mb-1">审核结果 *</label><select id="batchAuditResult" class="w-full border border-line rounded px-3 py-2"><option>通过</option><option>拒绝</option></select><label class="text-xs text-muted block mb-1">拒绝原因（拒绝时必填）</label><textarea id="batchAuditReason" class="w-full border border-line rounded px-3 py-2" rows="3"></textarea></div>`, footer: `<button class="${btnClass(false,true)}" data-close-modal>取消</button><button id="submitBatchAuditModal" class="${btnClass(true,true)}">确认审核</button>` });
       } else if (pageId === "coupon-lang-modal") {
@@ -2757,7 +2763,7 @@
       const modalPages = [
         "coupon-create-modal","coupon-toggle-modal","coupon-lang-modal","coupon-log-modal",
         "task-create-modal","task-toggle-modal","task-detail-modal","task-lang-modal","task-lang-view-modal","task-log-modal",
-        "campaign-tagverse-modal","campaign-tagverse-detail-modal","campaign-revoke-modal","campaign-log-modal","campaign-loop-stop-modal",
+        "campaign-tagverse-modal","campaign-tagverse-detail-modal","campaign-revoke-modal","campaign-log-modal",
         "batch-revoke-modal","batch-log-modal","audit-redpacket","audit-custom","audit-special","audit-batch-modal"
       ];
       if (modalPages.includes(p)) {
@@ -3297,10 +3303,6 @@
           notify("success", "已沿用当前配置，进入活动发放页面");
           switchPage("campaign-form");
         });
-        document.querySelectorAll("[data-campaign-stop]").forEach(btn => btn.onclick = () => {
-          state.selectedCampaignId = btn.dataset.campaignStop;
-          switchPage("campaign-loop-stop-modal");
-        });
         document.querySelectorAll("[data-campaign-revoke]").forEach(btn => btn.onclick = () => {
           state.selectedCampaignId = btn.dataset.campaignRevoke;
           switchPage("campaign-revoke-modal");
@@ -3474,7 +3476,6 @@
           notify("success", "已复制活动配置并跳转至活动发放");
           switchPage("campaign-form");
         };
-        document.getElementById("btnCampaignDetailStop").onclick = () => switchPage("campaign-loop-stop-modal");
         document.getElementById("btnCampaignDetailRevoke").onclick = () => switchPage("campaign-revoke-modal");
       }
 
@@ -3708,20 +3709,27 @@
         const row = state.data.campaigns.find(x => x.id === state.selectedCampaignId);
         if (row) {
           const reason = document.getElementById("revokeReason")?.value.trim();
-          row.status = "已撤销";
-          row.statuses = ["已撤销"];
-          row.revokeReason = reason ? `撤销原因：${reason}` : "撤销原因：运营手动撤销";
+          const loopRoot = String(row.id || "").replace(/-\d+$/, "");
+          const targetCampaigns = String(row.mode || "").includes("循环")
+            ? state.data.campaigns.filter(item => item.id === row.id || String(item.id || "").replace(/-\d+$/, "") === loopRoot)
+            : [row];
+          targetCampaigns.forEach(item => {
+            item.status = "已撤销";
+            item.statuses = ["已撤销"];
+            item.revokeReason = reason ? `撤销原因：${reason}` : "撤销原因：运营手动撤销";
+            pushCampaignLog(item, "撤销活动");
+          });
+          const targetCampaignIds = new Set(targetCampaigns.map(item => item.id));
           state.data.batches
-            .filter(batch => batch.campaign === row.id || batch.id.startsWith(`${row.id}-`) || batch.id === row.batch)
+            .filter(batch => targetCampaignIds.has(batch.campaign) || targetCampaigns.some(item => batch.id.startsWith(`${item.id}-`) || batch.id === item.batch))
             .forEach(batch => {
               batch.status = "已撤销";
               batch.reason = row.revokeReason;
             });
-          pushCampaignLog(row, "撤销当前活动；相关任务批次同步撤销，未兑换令牌回收，已兑换令牌不回收，后续未完成发放停止");
         }
         closeModal();
         switchPage("campaign-record");
-        notify("warn", "活动已撤销，未领取令牌已回收");
+        notify("warn", "活动已撤销，当前批次及循环计划下相关活动已同步更新");
       };
       const confirmBatchRevoke = document.getElementById("confirmBatchRevoke");
       if (confirmBatchRevoke) confirmBatchRevoke.onclick = () => {
@@ -3736,18 +3744,6 @@
         closeModal();
         switchPage("batch-list");
         notify("warn", "任务批次已撤销，未兑换令牌已回收");
-      };
-      const confirmLoopStop = document.getElementById("confirmLoopStop");
-      if (confirmLoopStop) confirmLoopStop.onclick = () => {
-        const row = state.data.campaigns.find(x => x.id === state.selectedCampaignId);
-        if (row) {
-          row.statuses = campaignStatuses(row);
-          if (!row.statuses.includes("循环终止")) row.statuses.push("循环终止");
-          pushCampaignLog(row, "终止未来循环活动生成/发放，不影响当前活动，当前活动继续按原状态流转");
-        }
-        closeModal();
-        switchPage("campaign-record");
-        notify("warn", "循环终止成功（当前活动继续执行）");
       };
       const confirmTagVerseSave = document.getElementById("confirmTagVerseSave");
       const tagVerseHistorySelect = document.getElementById("tagVerseHistorySelect");
