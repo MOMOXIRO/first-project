@@ -458,16 +458,16 @@
       },
       data: {
         tasks: [
-          { id:"T260610001", name:"充值50送现金", type:"充值", app:"Dana", condition:"充值金额 >= 50", coupons:["1001"], status:"启用", enabled:true, updatedAt:"2026-06-10 10:32",
+          { id:"T260610001", name:"充值50送现金", type:"充值", app:"Dana", condition:"充值金额 >= 50", coupons:["1001"], taskValidType:"发放后N天", taskValidDays:"30", appJump:"首页-活动页", couponRatios:{"1001":"100"}, status:"启用", enabled:true, updatedAt:"2026-06-10 10:32",
             logs: [
               { operator:"Jenny", time:"2026-06-10 10:32", content:"新增任务并关联红包 1001" },
               { operator:"Jenny", time:"2026-06-11 09:12", content:"启用任务，允许新活动引用" }
             ] },
-          { id:"T260620001", name:"交易2手送现金", type:"实盘交易", app:"TW", condition:"实盘手数 >= 2", coupons:["2001"], status:"启用", enabled:true, updatedAt:"2026-06-20 16:18",
+          { id:"T260620001", name:"交易2手送现金", type:"实盘交易", app:"TW", condition:"实盘手数 >= 2", coupons:["2001"], taskValidType:"领取后N天", taskValidDays:"14", appJump:"交易页-任务中心", couponRatios:{"2001":"80"}, status:"启用", enabled:true, updatedAt:"2026-06-20 16:18",
             logs: [{ operator:"Jenny", time:"2026-06-20 16:18", content:"编辑任务条件：实盘手数 >= 2" }] },
-          { id:"T260610002", name:"理财任务", type:"理财", app:"Dana", condition:"理财时长30天，年化收益2%，最低存款金额1000", coupons:[], status:"禁用", enabled:false, updatedAt:"2026-06-18 11:02",
+          { id:"T260610002", name:"理财任务", type:"理财", app:"Dana", condition:"理财时长30天，年化收益2%，最低存款金额1000", coupons:[], taskValidType:"发放后N天", taskValidDays:"30", appJump:"钱包页-卡券", couponRatios:{}, status:"禁用", enabled:false, updatedAt:"2026-06-18 11:02",
             logs: [{ operator:"Admin", time:"2026-06-18 11:02", content:"新增理财任务，理财任务不关联红包" }] },
-          { id:"T260620002", name:"无任务体验金", type:"无任务", app:"Dana", condition:"--", coupons:["1001"], status:"启用", enabled:true, updatedAt:"2026-06-22 14:26",
+          { id:"T260620002", name:"无任务体验金", type:"无任务", app:"Dana", condition:"--", coupons:["1001"], taskValidType:"", taskValidDays:"", appJump:"", couponRatios:{"1001":"100"}, status:"启用", enabled:true, updatedAt:"2026-06-22 14:26",
             logs: [{ operator:"Mia", time:"2026-06-22 14:26", content:"新增无任务奖励，关联红包 1001" }] }
         ],
         coupons: [
@@ -1519,6 +1519,25 @@
         .slice(0, 8);
     }
 
+    function findTaskByKeyword(keyword) {
+      const text = String(keyword || "").trim();
+      if (!text) return null;
+      const enabled = state.data.tasks.filter(t => t.enabled !== false);
+      return enabled.find(t => t.id === text)
+        || enabled.find(t => t.name === text)
+        || enabled.find(t => t.id.includes(text) || String(t.name || "").includes(text))
+        || null;
+    }
+
+    function searchTasksByKeyword(keyword) {
+      const text = String(keyword || "").trim();
+      if (!text) return [];
+      return state.data.tasks
+        .filter(t => t.enabled !== false)
+        .filter(t => t.id.includes(text) || String(t.name || "").includes(text))
+        .slice(0, 8);
+    }
+
     function couponTitleFromRecord(record) {
       if (!record || record.coupon === "--") return "--";
       return generatedCouponName(record.couponType, record.amount) || record.coupon || "--";
@@ -1596,6 +1615,90 @@
       if (draft.activityType === "特批活动" && state.role !== "super") return "特批活动仅超级运营可提交";
       if (draft.activityType === "特批活动" && !draft.approvalReason) return "特批活动需填写申请原因";
       return "";
+    }
+
+    function defaultCampaignDraft() {
+      return {
+        name: "",
+        project: "",
+        activityType: "普通活动",
+        approvalReason: "",
+        audienceType: "添加",
+        sidInput: "",
+        sidList: [],
+        tagVerseName: "",
+        saveAsTagVerse: false,
+        importedFileName: "",
+        importFailures: [],
+        taskKeyword: "",
+        deliverType: "立即发放",
+        timezone: "GMT+08:00",
+        deliverAt: "",
+        loopFreq: "每日",
+        loopPoint: "",
+        loopTime: "10:00:00",
+        notifyEnabled: false,
+        notifyType: "立即通知",
+        notifyAt: "",
+        notifyTimezone: "GMT+08:00",
+        notifyTemplate: "",
+        reminderEnabled: false,
+        reminderType: "立即通知",
+        reminderDays: "3",
+        reminderTimezone: "GMT+08:00",
+        reminderTime: "10:00:00",
+        reminderTemplate: "",
+        taskItems: []
+      };
+    }
+
+    function resetCampaignDraft() {
+      state.campaignDraft = defaultCampaignDraft();
+    }
+
+    function isCampaignDraftDirty(draft = state.campaignDraft) {
+      const d = draft || {};
+      if ((d.name || "").trim()) return true;
+      if ((d.project || "").trim()) return true;
+      if ((d.activityType || "普通活动") !== "普通活动") return true;
+      if ((d.approvalReason || "").trim()) return true;
+      if ((d.audienceType || "添加") !== "添加") return true;
+      if ((d.sidInput || "").trim()) return true;
+      if ((d.sidList || []).length) return true;
+      if ((d.tagVerseName || "").trim()) return true;
+      if (d.saveAsTagVerse) return true;
+      if ((d.importedFileName || "").trim()) return true;
+      if ((d.importFailures || []).length) return true;
+      if ((d.taskKeyword || "").trim()) return true;
+      if ((d.taskItems || []).length) return true;
+      if ((d.deliverType || "立即发放") !== "立即发放") return true;
+      if ((d.deliverAt || "").trim()) return true;
+      if (d.notifyEnabled || d.reminderEnabled) return true;
+      if ((d.notifyTemplate || "").trim() || (d.reminderTemplate || "").trim()) return true;
+      return false;
+    }
+
+    function leaveCampaignFormWithoutSaving() {
+      resetCampaignDraft();
+      closeModal();
+      switchPage("campaign-record");
+      notify("warn", "已返回，未保存的内容已丢弃");
+    }
+
+    function confirmLeaveCampaignForm(syncDraft) {
+      if (typeof syncDraft === "function") syncDraft();
+      if (!isCampaignDraftDirty()) {
+        resetCampaignDraft();
+        switchPage("campaign-record");
+        return;
+      }
+      openModal({
+        title: "返回确认",
+        body: `<div class="flex gap-3 items-start"><div class="w-9 h-9 rounded-full border border-[#f59e0b] text-[#f59e0b] flex items-center justify-center text-xl shrink-0">!</div><div><div class="text-[22px] font-semibold mb-2">当前有未保存内容，确认返回吗？</div><div class="text-[14px] text-[#64748b]">返回后本次填写的内容将不会保存。</div></div></div>`,
+        footer: `<button class="${btnClass(false,true)}" data-close-modal>继续编辑</button><button id="confirmLeaveCampaignForm" class="h-9 px-4 rounded bg-[#ef4444] text-white font-semibold whitespace-nowrap shrink-0">确认返回</button>`
+      });
+      const confirmBtn = document.getElementById("confirmLeaveCampaignForm");
+      if (confirmBtn) confirmBtn.onclick = () => leaveCampaignFormWithoutSaving();
     }
 
     function renderTaskList() {
@@ -1891,8 +1994,11 @@
           </div>
           <div class="px-4 py-3 border-y border-line font-semibold text-[13px]">3. 活动发放内容配置</div>
           <div class="p-4 space-y-3 text-[12px]">
-            <div class="flex gap-2">
-              <input id="fTaskKeyword" class="border border-line rounded px-2 py-2 w-[280px]" placeholder="输入任务ID/任务名称检索" value="${d.taskKeyword}">
+            <div class="flex gap-2 items-start">
+              <div class="relative w-[320px]">
+                <input id="fTaskKeyword" class="w-full border border-line rounded px-2 py-2" placeholder="输入任务ID/任务名称模糊搜索" value="${d.taskKeyword}" autocomplete="off">
+                <div id="campaignTaskSearchDropdown" class="hidden absolute left-0 right-0 top-[38px] z-[80] max-h-[220px] overflow-auto rounded border border-line bg-white shadow-pop"></div>
+              </div>
               <button id="btnAddTaskItem" class="${btnClass(true,true)}">添加任务</button>
               <button id="btnAddCustomCoupon" class="${btnClass(false,true)}">添加自定义任务</button>
             </div>
@@ -2541,27 +2647,46 @@
         });
       } else if (pageId === "task-detail-modal") {
         const t = state.data.tasks.find(r => r.id === state.selectedTaskId) || state.data.tasks[0];
-        const grouped = Object.entries((t.coupons || []).reduce((acc, id) => {
+        const d = normalizeTaskDraft(taskDraftFromTask(t));
+        const isFinance = d.type === "理财";
+        const isNoTask = d.type === "无任务";
+        const couponGroups = Object.entries((d.couponsText || "").split(",").map(x => x.trim()).filter(Boolean).reduce((acc, id) => {
           acc[id] = (acc[id] || 0) + 1;
           return acc;
         }, {}));
+        const conditionRows = d.type === "充值" ? [
+          `充值金额：${d.rechargeAmount || "--"}`
+        ] : d.type === "实盘交易" ? [
+          `实盘手数：${d.tradeLots || "--"}`
+        ] : d.type === "理财" ? [
+          `理财时长(天)：${d.financeDays || "--"}`,
+          `理财年化收益(%)：${d.financeRate || "--"}`,
+          `最低存款金额($)：${d.financeDeposit || "--"}`
+        ] : ["无任务类型不需要填写任务条件。"];
+        if (!isNoTask) conditionRows.push(`APP内部跳转：${d.appJump || "--"}`);
+        const taskValidityText = formatTaskValidity(d);
         openModal({
           title: "任务详情",
           body: `<div class="space-y-4 text-[12px]">
             <section class="border border-line rounded p-3">
               <div class="font-semibold mb-3">1. 基础信息</div>
               <div class="grid grid-cols-3 gap-3">
-                <div>任务ID：${t.id}</div><div>任务名称：${t.name}</div><div>项目：${t.app}</div>
-                <div>任务类型：${t.type}</div><div>任务状态：${badge(t.status)}</div><div>更新时间：${formatDisplayTime(t.updatedAt)}</div>
+                <div>任务ID：${t.id}</div><div>任务名称：${d.name || "--"}</div><div>项目：${d.app || "--"}</div>
+                <div>任务类型：${d.type || "--"}</div><div>任务状态：${badge(t.status)}</div><div>更新时间：${formatDisplayTime(t.updatedAt)}</div>
               </div>
             </section>
-            <section class="border border-line rounded p-3">
+            ${isNoTask ? "" : `<section class="border border-line rounded p-3">
               <div class="font-semibold mb-3">2. 任务条件</div>
-              <div>${t.condition || "--"}</div>
-            </section>
+              <div class="grid grid-cols-3 gap-3">${conditionRows.map(row => `<div>${row}</div>`).join("")}</div>
+            </section>`}
             <section class="border border-line rounded p-3">
-              <div class="font-semibold mb-3">3. 关联红包与文案配置</div>
-              ${t.type === "理财" ? `<div class="text-muted">理财任务不关联红包。</div>` : `<table class="w-full text-[12px]"><thead class="bg-[#f3f6fb]"><tr><th class="text-left px-3 py-2">红包ID</th><th class="text-left px-3 py-2">红包标题</th><th class="text-left px-3 py-2">数量</th><th class="text-left px-3 py-2">多语言配置</th></tr></thead><tbody>${grouped.map(([id, count]) => { const c = state.data.coupons.find(x => x.id === id); return `<tr class="border-t border-line"><td class="px-3 py-2">${id}</td><td class="px-3 py-2">${couponTitle(c)}</td><td class="px-3 py-2">${count}</td><td class="px-3 py-2"><button class="${btnClass(false,true)}" data-task-detail-coupon-config="${id}" data-task-detail-source="${t.id}">查看配置</button></td></tr>`; }).join("") || `<tr><td class="px-3 py-4 text-muted" colspan="4">暂无关联红包</td></tr>`}</tbody></table>`}
+              <div class="font-semibold mb-3">${isNoTask ? "2" : "3"}. 有效期与奖励</div>
+              ${isNoTask ? "" : `<div class="mb-3">任务有效期：${taskValidityText}</div>`}
+              ${isFinance ? `<div class="text-muted">理财任务不关联红包。</div>` : `<div class="border border-line rounded overflow-auto"><table class="w-full text-[12px]"><thead class="bg-[#f3f6fb]"><tr><th class="text-left px-3 py-2">红包ID</th><th class="text-left px-3 py-2">红包标题</th><th class="text-left px-3 py-2">红包类型</th><th class="text-left px-3 py-2">红包金额</th><th class="text-left px-3 py-2">${couponValidityLabel()}</th><th class="text-left px-3 py-2">数量</th><th class="text-left px-3 py-2">抵扣比例</th><th class="text-left px-3 py-2">多语言配置</th></tr></thead><tbody>${couponGroups.map(([id, count]) => {
+                const c = state.data.coupons.find(item => item.id === id);
+                const ratioValue = couponSupportsRatio(c) ? (d.couponRatios?.[id] || "100") : "100";
+                return `<tr class="border-t border-line"><td class="px-3 py-2">${id}</td><td class="px-3 py-2">${c ? couponTitle(c) : "未匹配红包"}</td><td class="px-3 py-2">${c?.type || "--"}</td><td class="px-3 py-2">${c?.amount || "--"}</td><td class="px-3 py-2">${couponValidityValue(c ? couponValidDaysText(c.validDays) : "--")}</td><td class="px-3 py-2">${count}</td><td class="px-3 py-2">${ratioValue}%</td><td class="px-3 py-2"><button class="${btnClass(false,true)}" data-task-detail-coupon-config="${id}" data-task-detail-source="${t.id}">查看配置</button></td></tr>`;
+              }).join("") || `<tr><td class="px-3 py-4 text-muted" colspan="8">暂无关联红包</td></tr>`}</tbody></table></div>`}
             </section>
           </div>`,
           footer: `<button class="${btnClass(false,true)}" data-close-modal>关闭</button>`
@@ -3281,7 +3406,6 @@
       }
       const campaignBack = document.getElementById("btnCampaignBack");
       if (campaignBack) {
-        campaignBack.onclick = () => switchPage("campaign-record");
         const syncDraft = () => {
           const val = (id, fallback = "") => document.getElementById(id) ? document.getElementById(id).value.trim() : fallback;
           const checked = id => document.getElementById(id) ? document.getElementById(id).checked : false;
@@ -3320,6 +3444,7 @@
             }
           });
         };
+        campaignBack.onclick = () => confirmLeaveCampaignForm(syncDraft);
         ["fCampaignType","fAudienceType","fDeliverType","fLoopFreq","fNotifyType","fReminderType"].forEach(id => {
           const node = document.getElementById(id);
           if (node) node.onchange = () => { syncDraft(); render(); };
@@ -3384,16 +3509,52 @@
           state.campaignDraft.sidList.splice(Number(btn.dataset.removeCampaignSid), 1);
           render();
         });
-        document.getElementById("btnAddTaskItem").onclick = () => {
-          syncDraft();
-          if (!state.campaignDraft.taskKeyword) return notify("error","请输入任务ID或任务名称");
-          const keyword = state.campaignDraft.taskKeyword;
-          const task = state.data.tasks.find(t => t.id.includes(keyword) || t.name.includes(keyword));
+        const campaignTaskKeywordInput = document.getElementById("fTaskKeyword");
+        const campaignTaskSearchDropdown = document.getElementById("campaignTaskSearchDropdown");
+        const addCampaignTaskByKeyword = (keyword) => {
+          const task = findTaskByKeyword(keyword);
           if (!task) return notify("error", "未找到匹配任务，请输入任务ID或任务名称");
+          if (task.enabled === false) return notify("error", "只能添加启用状态的任务");
           state.campaignDraft.taskItems.push(campaignItemFromTask(task));
           state.campaignDraft.taskKeyword = "";
           notify("success", "已添加任务并读取关联红包");
           render();
+        };
+        if (campaignTaskKeywordInput && campaignTaskSearchDropdown) {
+          const renderTaskSearchDropdown = () => {
+            const rows = searchTasksByKeyword(campaignTaskKeywordInput.value);
+            if (!rows.length) {
+              campaignTaskSearchDropdown.innerHTML = `<div class="px-3 py-2 text-[12px] text-[#94a3b8]">暂无匹配任务</div>`;
+            } else {
+              campaignTaskSearchDropdown.innerHTML = rows.map(t => `
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-[#f8fbff] border-b border-line/60 last:border-b-0" data-pick-campaign-task="${t.id}">
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="font-medium text-[#1f2a44]">${t.name}</span>
+                    <span class="text-[#64748b]">${t.id}</span>
+                  </div>
+                  <div class="mt-1 text-[11px] text-[#64748b]">${t.type} / ${t.app} / ${t.condition || "--"} / ${t.status}</div>
+                </button>
+              `).join("");
+            }
+            campaignTaskSearchDropdown.classList.remove("hidden");
+            campaignTaskSearchDropdown.querySelectorAll("[data-pick-campaign-task]").forEach(btn => {
+              btn.onmousedown = (event) => event.preventDefault();
+              btn.onclick = () => {
+                syncDraft();
+                addCampaignTaskByKeyword(btn.dataset.pickCampaignTask);
+              };
+            });
+          };
+          campaignTaskKeywordInput.oninput = renderTaskSearchDropdown;
+          campaignTaskKeywordInput.onfocus = () => {
+            if (campaignTaskKeywordInput.value.trim()) renderTaskSearchDropdown();
+          };
+          campaignTaskKeywordInput.onblur = () => setTimeout(() => campaignTaskSearchDropdown.classList.add("hidden"), 120);
+        }
+        document.getElementById("btnAddTaskItem").onclick = () => {
+          syncDraft();
+          if (!state.campaignDraft.taskKeyword) return notify("error","请输入任务ID或任务名称");
+          addCampaignTaskByKeyword(state.campaignDraft.taskKeyword);
         };
         document.getElementById("btnAddCustomCoupon").onclick = () => {
           syncDraft();
@@ -3418,7 +3579,9 @@
           const err = validateCampaignDraft(state.campaignDraft);
           if (err) return notify("error", err);
           createCampaignFromDraft(state.campaignDraft);
+          resetCampaignDraft();
           notify("success", "提交成功");
+          switchPage("campaign-record");
         };
       }
       const campaignDetailBack = document.getElementById("btnCampaignDetailBack");
