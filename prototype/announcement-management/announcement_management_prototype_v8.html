@@ -1,0 +1,3165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>公告管理原型</title>
+<style>
+:root{
+  --bg:#f5f6fa;--panel:#fff;--line:#e6eaf2;--text:#1f2430;--muted:#97a0b3;
+  --pri:#2f6bff;--pri-hover:#245cf0;--soft:#e8f0ff;--ok:#166534;--warn:#c2410c;--danger:#b91c1c;
+  --field-line:#d5ddeb;--head-bg:#f3f6fb;--radius:8px;
+  --shadow-panel:0 10px 26px rgba(15,23,42,.08);--shadow-pop:0 18px 42px rgba(15,23,42,.18);
+  --focus:0 0 0 3px rgba(47,107,255,.2);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+button,input,select,textarea{font:inherit}
+input:focus,select:focus,textarea:focus,button:focus{outline:none;box-shadow:var(--focus)}
+
+.page{padding:16px 24px 32px}
+.page-header{margin-bottom:16px;display:flex;align-items:baseline;gap:10px}
+.page-header h1{margin:0;font-size:24px;font-weight:700;color:var(--text);line-height:1.2}
+.page-header-tz{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.02em;line-height:1.4}
+
+.shell{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-panel);overflow:hidden;min-height:720px}
+.meta-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--line);background:#fbfcff;font-size:11px;color:var(--muted)}
+.meta-crumb{display:flex;align-items:center;gap:8px}
+.meta-tag{padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--pri);font-weight:600}
+.shell-body{padding:16px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:#fff}
+.title{font-weight:600;font-size:16px;color:var(--text)}
+.sub{font-size:12px;color:var(--muted);margin-top:4px}
+.title-tz-hint{margin-left:10px;font-size:12px;font-weight:500;color:var(--muted);vertical-align:middle}
+.body{padding:16px 18px}
+
+.btn{height:34px;padding:0 14px;border:1px solid var(--pri);background:var(--pri);border-radius:7px;cursor:pointer;color:#fff;font-size:13px;font-weight:600;box-shadow:0 4px 10px rgba(47,107,255,.24);transition:transform .12s ease,background .12s ease}
+.btn:hover{background:var(--pri-hover)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.ghost{background:#fff;border-color:var(--field-line);color:#475569;box-shadow:none;font-weight:500}
+.btn.ghost:hover{color:var(--pri);border-color:#c4d0e6;background:#fff}
+.btn.compact{height:30px;padding:0 14px;font-size:12px}
+.head-actions{display:flex;align-items:center;gap:8px}
+.lang-sync-hint{font-size:13px;color:#64748b;line-height:1.7;margin-bottom:14px}
+.lang-sync-all{margin-bottom:14px}
+.lang-sync-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 14px}
+.lang-sync-item{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#334155;cursor:pointer;user-select:none}
+.lang-sync-item.is-current{color:#94a3b8;cursor:default}
+.lang-sync-item input{width:16px;height:16px;accent-color:var(--pri);cursor:pointer}
+.lang-sync-item input:disabled{cursor:not-allowed;opacity:.7}
+
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.grid3 > .hidden,.grid4 > .hidden{display:none !important}
+.duration-wrap{display:flex;gap:8px;align-items:center;width:100%}
+.duration-wrap .control.num{flex:1 1 0;min-width:0}
+.duration-wrap .control.unit{flex:0 0 90px;width:90px;padding:0 8px}
+.duration-unit-text{flex:0 0 auto;color:#475569;font-size:13px;font-weight:500;min-width:1.5em}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.label{font-size:13px;font-weight:500;color:#334155}
+.label .req{color:#ef4444;margin-right:2px;font-weight:700}
+.control{height:34px;border:1px solid var(--field-line);border-radius:7px;padding:0 10px;width:100%;background:#fff;color:#1f2937;font-size:14px;transition:border-color .15s ease,box-shadow .15s ease}
+.control:hover{border-color:#c4d0e6}
+.control:focus{border-color:var(--pri)}
+textarea.control{height:150px;padding:10px;line-height:1.7;resize:vertical}
+
+.filter-panel{border:1px solid #dfe5f0;border-radius:10px;background:linear-gradient(180deg,#fbfdff 0%,#f8fbff 100%);box-shadow:inset 0 1px 0 #fff;padding:14px}
+.filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-item{display:flex;flex-direction:column;gap:6px}
+.name-filter{width:180px}
+.project-filter,.status-filter,.mode-filter{width:130px}
+.cycle-filter{width:140px}
+.date-range-filter{width:300px;min-width:280px}
+.range-wrap{display:flex;align-items:center;height:34px;border:1px solid #d5ddeb;border-radius:6px;background:#fff;padding:0 10px;gap:8px;width:100%}
+.range-wrap input{width:0;min-width:0;flex:1 1 0;border:none;outline:none;background:transparent;font-size:14px;color:var(--text)}
+.range-wrap input::placeholder{color:#9aa5b6}
+.range-mid{color:#9aa5b6;font-weight:600;flex:0 0 auto}
+.filter-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.list-actions{display:flex;align-items:center;gap:8px;margin-top:10px}
+.list-pager{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
+.list-pager-info{font-size:13px;color:var(--muted);margin-right:auto}
+.pager-btn{min-width:32px;height:32px;padding:0 10px;border:1px solid var(--field-line);background:#fff;border-radius:6px;color:#334155;font-size:13px;cursor:pointer}
+.pager-btn:hover:not(:disabled){border-color:var(--pri);color:var(--pri)}
+.pager-btn.active{background:var(--pri);border-color:var(--pri);color:#fff;font-weight:600}
+.pager-btn:disabled{opacity:.4;cursor:not-allowed}
+
+.table-wrap{border:1px solid #dfe5f0;border-radius:10px;background:#fff;box-shadow:0 6px 18px rgba(15,23,42,.05);overflow:auto;margin-top:10px}
+.data-table{width:100%;border-collapse:collapse;table-layout:auto;min-width:1280px}
+.data-table th,.data-table td{padding:0 12px;text-align:left;white-space:nowrap}
+.data-table thead th{height:40px;background:var(--head-bg);color:#334155;font-weight:600;font-size:14px}
+.data-table tbody td{height:48px;color:#1f2937;font-size:14px;border-top:1px solid #edf1f7;vertical-align:middle}
+.data-table tbody td:last-child{height:auto;padding-top:10px;padding-bottom:10px}
+.data-table tbody tr:hover{background:#fafcff}
+.data-table th:first-child,.data-table td:first-child{padding-left:16px}
+.data-table th:last-child,.data-table td:last-child{padding-right:16px}
+
+.pill{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:700;line-height:22px}
+.pill.ok{background:#dcfce7;color:var(--ok)}
+.pill.warn{background:#ffedd5;color:var(--warn)}
+.pill.off{background:#fee2e2;color:#b91c1c}
+.pill.draft{background:#eef2f7;color:#64748b}
+.pill.cancel{background:#f1f5f9;color:#64748b}
+.pill.cycle-none{background:#f1f5f9;color:#94a3b8}
+.pill.cycle-on{background:#e0e7ff;color:#3730a3}
+.pill.cycle-off{background:#ffe4e6;color:#9f1239}
+.cycle-info{display:flex;flex-direction:column;gap:2px;line-height:1.35;white-space:normal;min-width:108px}
+.cycle-info .cycle-rule{color:#334155;font-weight:500;font-size:13px}
+.cycle-info .cycle-period{color:#64748b;font-size:12px}
+.cycle-info .cycle-empty{color:#94a3b8}
+.text-btn{height:28px;padding:0 8px;border:1px solid var(--field-line);background:#fff;border-radius:6px;color:#334155;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap}
+.text-btn:hover{border-color:#c4d0e6;color:var(--pri)}
+.text-btn.danger{border-color:#fecaca;color:#b91c1c}
+.text-btn.danger:hover{background:#fef2f2}
+.term-options{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.term-option{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border:1px solid var(--field-line);border-radius:8px;cursor:pointer}
+.term-option:has(input:checked){border-color:var(--pri);background:#f5f8ff}
+.term-option input{margin-top:3px;accent-color:var(--pri)}
+.term-option span{font-size:13px;line-height:1.5;color:#334155}
+
+.icon-actions{display:inline-flex;align-items:center;gap:8px;flex-wrap:nowrap;white-space:nowrap}
+.icon-btn{width:34px;height:34px;border:none;border-radius:8px;background:var(--pri);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 8px rgba(47,107,255,.28);transition:transform .12s ease,background .12s ease,box-shadow .12s ease}
+.icon-btn:hover{background:var(--pri-hover)}
+.icon-btn:active{transform:translateY(1px)}
+.icon-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.icon-btn:disabled:hover{background:var(--pri)}
+.icon-btn.danger{background:#ef4444;box-shadow:0 3px 8px rgba(239,68,68,.3)}
+.icon-btn.danger:hover{background:#dc2626}
+.icon-btn.danger:disabled:hover{background:#ef4444}
+.icon-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.data-table tr.is-disabled td{color:#94a3b8}
+.shelf-action{display:inline-flex;align-items:center;gap:5px;margin-right:4px;color:#64748b;font-size:12px;cursor:pointer}
+.shelf-switch{position:relative;width:34px;height:18px;display:inline-block}
+.shelf-switch input{position:absolute;opacity:0;pointer-events:none}
+.shelf-slider{position:absolute;inset:0;border-radius:999px;background:#cbd5e1;transition:.18s}
+.shelf-slider:before{content:"";position:absolute;width:14px;height:14px;left:2px;top:2px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.25);transition:.18s}
+.shelf-switch input:checked + .shelf-slider{background:var(--pri)}
+.shelf-switch input:checked + .shelf-slider:before{transform:translateX(16px)}
+.shelf-switch input:disabled + .shelf-slider{opacity:.45;cursor:not-allowed}
+.shelf-text{min-width:24px}
+
+.hidden{display:none}
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:0 18px;gap:4px 10px;background:#fff}
+.tab{border:none;background:transparent;padding:10px 4px;cursor:pointer;color:#334155;border-bottom:2px solid transparent;font-size:13px;font-weight:500;white-space:nowrap}
+.tab.active{color:#2563eb;border-bottom-color:#2563eb;font-weight:600}
+.lang-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);background:#fff;padding:0 18px}
+.lang-toolbar .tabs{flex:1 1 auto;min-width:0;border-bottom:none;padding:0;background:transparent}
+.lang-toolbar .head-actions{flex:0 0 auto;padding-bottom:8px;align-self:center}
+.tokens{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.token{height:30px;padding:0 12px;border:1px solid var(--pri);background:var(--pri);color:#fff;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;box-shadow:0 4px 10px rgba(47,107,255,.24)}
+.token:hover{background:var(--pri-hover)}
+
+.preview{position:sticky;top:16px}
+.phone{margin:16px;background:#eef2f7;border:8px solid #111827;border-radius:28px;min-height:560px;overflow:hidden;display:flex;flex-direction:column}
+.phoneTop{height:34px;flex:0 0 34px;background:#111827;color:#fff;padding:9px 15px;font-size:11px}
+.phoneBody{padding:16px 14px;position:relative;flex:1 1 auto;min-height:480px;background:#eef2f7}
+.notice{background:#fff;border-radius:16px;padding:18px;box-shadow:0 4px 14px rgba(15,23,42,.08)}
+.notice h3{margin:0 0 12px;font-size:16px}
+.notice p{white-space:pre-line;line-height:1.7;color:#4b5563;margin:0}
+.box{margin-top:14px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:13px}
+.alert{padding:10px 12px;border-radius:8px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;font-size:12px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--pri)}
+
+.param-range{display:flex;align-items:center;gap:6px;min-width:260px}
+.param-range .control{min-width:0;flex:1 1 0}
+.param-range .range-mid{flex:0 0 auto;color:#9aa5b6;font-weight:600}
+.param-type-stack{display:flex;flex-direction:column;gap:6px;min-width:128px}
+.param-type-stack .control{width:100%;box-sizing:border-box}
+.check-panel{position:relative;border:1px solid #d5ddeb;border-radius:8px;background:#fff;z-index:1}
+.check-panel.is-open{z-index:30}
+.check-panel-head{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#eef4ff;border-radius:8px;font-size:12px;color:#334155;font-weight:500;cursor:pointer;user-select:none}
+.check-panel.is-open .check-panel-head{border-radius:8px 8px 0 0;border-bottom:1px solid #dbe4ff}
+.check-panel-head .check-panel-all-wrap{display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+.check-panel-summary{color:#64748b;font-weight:400;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.check-panel-toggle{margin-left:auto;border:none;background:transparent;color:#64748b;font-size:12px;cursor:pointer;padding:0 2px;flex:0 0 auto}
+.check-panel-body{display:none;position:absolute;left:0;right:0;top:calc(100% - 1px);grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;padding:10px;max-height:180px;overflow:auto;background:#fff;border:1px solid #d5ddeb;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 10px 24px rgba(15,23,42,.12);z-index:31}
+.check-panel.is-open .check-panel-body{display:grid}
+.check-panel-item{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#334155;cursor:pointer;user-select:none;min-width:0}
+.check-panel-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.check-panel-head input,
+.check-panel-item input{width:14px;height:14px;accent-color:var(--pri);cursor:pointer;flex:0 0 auto}
+.target-check-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start;position:relative;z-index:2}
+.target-check-row .field{min-width:0;position:relative}
+.target-check-row .label{margin-bottom:0}
+.form-stack{display:flex;flex-direction:column;gap:16px}
+.form-stack .field .control,
+.form-stack .field .range-wrap,
+.form-stack .field .duration-wrap{width:100%;box-sizing:border-box}
+.config-row.hidden,.config-subrow.hidden{display:none !important}
+.weekday-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:34px;align-items:center}
+.weekday-chips label{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 8px;border:1px solid var(--field-line);border-radius:6px;font-size:12px;color:#334155;cursor:pointer;user-select:none;background:#fff}
+.weekday-chips label.is-on{border-color:var(--pri);background:var(--soft);color:var(--pri);font-weight:600}
+.weekday-chips input{display:none}
+
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000}
+.modal-panel{width:min(760px,100%);max-height:86vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-pop);margin:auto;flex-shrink:0}
+.modal-head,.modal-foot{padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+.modal-head{border-bottom:1px solid var(--line)}
+.modal-foot{border-top:1px solid var(--line);justify-content:flex-end;gap:8px}
+.modal-body{padding:18px}
+.modal-close{border:none;background:transparent;font-size:14px;cursor:pointer;color:var(--muted);padding:4px 8px;border-radius:6px}
+.modal-close:hover{color:var(--text);background:#f8fafc}
+
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.detail-grid>div{padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #edf1f7}
+.detail-grid span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.confirm-text{line-height:1.8}
+.page-toast{position:fixed;right:24px;bottom:24px;transform:translateY(10px);opacity:0;background:#fff;color:var(--text);padding:11px 14px;border-radius:8px;border:1px solid var(--line);box-shadow:0 10px 28px rgba(15,23,42,.14);z-index:1200;transition:.18s ease;font-size:13px;min-width:220px}
+.page-toast.show{opacity:1;transform:translateY(0)}
+
+.log-summary{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.log-summary span{font-size:13px;color:var(--muted)}
+.log-table-wrap{border:1px solid #dfe5f0;border-radius:10px;overflow:hidden}
+.log-table{width:100%;border-collapse:collapse}
+.log-table th,.log-table td{padding:12px 14px;text-align:left;border-bottom:1px solid #edf1f7;white-space:normal}
+.log-table th{background:var(--head-bg);color:#334155;font-weight:600}
+.log-table tr:last-child td{border-bottom:none}
+
+.body-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:12px;flex-wrap:wrap}
+.check-row{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#334155;cursor:pointer;user-select:none}
+.check-row input{width:16px;height:16px;accent-color:var(--pri);cursor:pointer}
+.popup-panel{margin-top:14px;padding-top:14px;border-top:1px dashed #e2e8f0}
+.popup-inline-panel{margin-top:0}
+.popup-inline-panel.hidden{display:none !important}
+.popup-inline-title{font-size:14px;font-weight:600;color:#1f2937;margin-bottom:12px}
+.popup-validity{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.popup-validity.hidden{display:none !important}
+.popup-hint{font-size:12px;color:#64748b;line-height:1.4}
+.popup-window-inline{display:none !important;align-items:center;gap:8px;flex-wrap:wrap}
+#popupLimitedBlock .popup-window-inline,
+#popupWindowField[data-active="none"] #popupWindowNone,
+#popupWindowField[data-active="daily"] #popupWindowDaily,
+#popupWindowField[data-active="weekly"] #popupWindowWeekly,
+#popupWindowField[data-active="monthly"] #popupWindowMonthly{display:flex !important}
+.popup-window-inline .control{width:auto;min-width:0;flex:0 0 auto}
+.popup-window-inline .control.time-sm{width:120px}
+.popup-window-inline .control.day-sm{width:88px}
+.popup-window-inline .control.wd-sm{width:96px}
+.popup-window-inline .control.dt-md{flex:1 1 160px;min-width:140px}
+.popup-window-inline .mid{color:#94a3b8;font-size:13px}
+.popup-freq-locked{height:38px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--field-line);border-radius:var(--field-radius);background:#f8fafc;color:#334155;font-size:13px}
+.popup-freq-locked.hidden{display:none !important}
+#popupRepeatRule.hidden{display:none !important}
+#popupPermanentBlock.hidden,#popupLimitedBlock.hidden{display:none !important}
+#popupCycleWindowRow{
+  display:grid !important;
+  grid-template-columns:minmax(140px,.85fr) minmax(260px,1.5fr);
+  gap:12px;
+  align-items:start;
+}
+#popupCycleWindowRow > .field{min-width:0}
+@media(max-width:720px){
+  #popupCycleWindowRow{grid-template-columns:1fr !important}
+}
+.content-mode-tabs{display:flex;gap:8px;margin-bottom:14px}
+.content-mode-tabs.hidden{display:none !important}
+.content-mode-tab{height:32px;padding:0 14px;border:1px solid var(--field-line);background:#fff;border-radius:7px;color:#64748b;font-size:13px;cursor:pointer}
+.content-mode-tab:hover{border-color:#c4d0e6;color:var(--text)}
+.content-mode-tab.active{border-color:var(--pri);background:#eff4ff;color:var(--pri);font-weight:600}
+.content-mode-tab:disabled{opacity:.45;cursor:not-allowed}
+#bodyContentPanel.hidden{display:none !important}
+.popup-preview{margin-top:12px;padding:12px;border:1px solid #dbe4ff;border-radius:10px;background:#f5f8ff}
+.popup-preview .label{margin-bottom:6px;color:var(--pri)}
+.popup-preview p{margin:0;white-space:pre-line;line-height:1.7;color:#334155;font-size:13px}
+.preview-mode{display:flex;gap:8px;margin-top:8px}
+.preview-mode-btn{flex:1;height:32px;border:1px solid var(--field-line);background:#fff;border-radius:7px;color:#64748b;font-size:13px;cursor:pointer}
+.preview-mode-btn.active{border-color:var(--pri);background:#eff4ff;color:var(--pri);font-weight:600}
+.preview-mode-btn:disabled{opacity:.45;cursor:not-allowed}
+.preview-tz-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.preview-tz-row .label{margin:0;white-space:nowrap;flex:0 0 auto;font-size:12px;color:var(--muted);font-weight:500}
+.preview-tz-row .control{flex:1;min-width:0;height:34px}
+.preview-body-view{min-height:420px}
+.article-view{background:#fff;border-radius:12px;padding:18px 16px;min-height:420px;box-shadow:0 2px 10px rgba(15,23,42,.06)}
+.article-view .article-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;font-size:12px;color:#94a3b8}
+.article-view .article-title{margin:0 0 14px;font-size:18px;line-height:1.45;font-weight:700;color:var(--text)}
+.article-view .article-body{margin:0;white-space:pre-line;line-height:1.85;color:#334155;font-size:14px}
+.article-view .article-title.is-placeholder,
+.article-view .article-body.is-placeholder,
+.popup-card-demo .popup-title.is-placeholder,
+.popup-card-demo .popup-text.is-placeholder{color:#94a3b8;font-weight:400}
+.article-view .article-time{margin-top:18px;padding-top:14px;border-top:1px solid #eef2f7;font-size:12px;color:#64748b;line-height:1.7;white-space:pre-line}
+.preview-popup-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px 16px;box-sizing:border-box;background:rgba(15,23,42,.45);z-index:2}
+.preview-popup-view.hidden{display:none !important}
+.preview-body-view.hidden{display:none !important}
+.popup-mask-demo{display:none}
+.popup-card-demo{position:relative;z-index:1;width:100%;background:#fff;border-radius:14px;padding:18px 16px;box-shadow:0 12px 28px rgba(15,23,42,.2)}
+.popup-card-demo .popup-title{font-size:15px;font-weight:700;margin:0 0 10px;color:var(--text)}
+.popup-card-demo .popup-text{margin:0;white-space:pre-line;line-height:1.7;color:#4b5563;font-size:13px}
+.popup-card-demo .popup-actions{display:flex;justify-content:flex-end;margin-top:16px}
+.popup-card-demo .popup-actions .btn{height:30px;padding:0 14px;font-size:12px}
+.popup-detail-btn{width:36px;height:36px;padding:0;border:none;border-radius:50%;background:var(--pri);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(47,107,255,.35)}
+.popup-detail-btn:hover{background:var(--pri-hover)}
+.popup-detail-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.footer-bar{margin-top:16px;padding:14px 18px;border:1px solid var(--line);border-radius:10px;background:#fff;display:flex;justify-content:center;gap:10px;box-shadow:0 6px 18px rgba(15,23,42,.04)}
+.footer-bar.end{justify-content:flex-end}
+
+.modal-mask.hidden{display:none !important}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.preview{position:static}.target-check-row,.grid4{grid-template-columns:1fr 1fr}}
+@media(max-width:720px){.grid2,.grid3,.grid4,.target-check-row{grid-template-columns:1fr}.page{padding:12px}.filter-actions{margin-left:0;width:100%}.name-filter,.project-filter,.status-filter,.date-filter{width:100%}.recurrence-inline .control{min-width:100%;flex:1 1 100%}.lang-sync-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.check-panel-body{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="page-header">
+    <h1>公告管理</h1>
+    <span class="page-header-tz">当前基准时区为：GMT+3</span>
+  </header>
+
+  <section class="shell">
+    <div class="meta-bar">
+      <div class="meta-crumb">
+        <span>工作台</span>
+        <span class="meta-tag" id="metaTag">公告列表</span>
+      </div>
+    </div>
+    <div class="shell-body">
+
+<section id="listPage">
+  <div class="filter-panel">
+    <div class="filter-bar">
+      <div class="filter-item name-filter">
+        <input class="control" id="noticeNameFilter" placeholder="公告标题">
+      </div>
+      <div class="filter-item project-filter">
+        <select class="control" id="projectFilter">
+          <option>所属项目</option>
+          <option>Dana</option>
+          <option>TW</option>
+        </select>
+      </div>
+      <div class="filter-item mode-filter">
+        <select class="control" id="publishModeFilter">
+          <option>发布方式</option>
+          <option>即时发布</option>
+          <option>定时发布</option>
+        </select>
+      </div>
+      <div class="filter-item status-filter">
+        <select class="control" id="statusFilter">
+          <option>公告状态</option>
+          <option>待发布</option>
+          <option>展示中</option>
+          <option>已下架</option>
+          <option>已归档</option>
+          <option>已取消</option>
+        </select>
+      </div>
+      <div class="filter-item status-filter">
+        <select class="control" id="cycleStatusFilter">
+          <option>循环状态</option>
+          <option>无循环</option>
+          <option>循环中</option>
+          <option>已终止</option>
+        </select>
+      </div>
+      <div class="filter-item status-filter">
+        <select class="control" id="popupFilter">
+          <option>有无弹窗</option>
+          <option>有弹窗</option>
+          <option>无弹窗</option>
+        </select>
+      </div>
+      <div class="filter-item cycle-filter">
+        <input class="control" id="cycleIdFilter" placeholder="公告ID">
+      </div>
+      <div class="filter-item date-range-filter">
+        <div class="range-wrap">
+          <input id="publishFrom" type="text" title="发布开始日期" placeholder="发布开始日期">
+          <span class="range-mid">~</span>
+          <input id="publishTo" type="text" title="发布结束日期" placeholder="发布结束日期">
+        </div>
+      </div>
+      <div class="filter-item date-range-filter">
+        <div class="range-wrap">
+          <input id="createdFrom" type="text" title="创建开始日期" placeholder="创建开始日期">
+          <span class="range-mid">~</span>
+          <input id="createdTo" type="text" title="创建结束日期" placeholder="创建结束日期">
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn ghost" type="button" onclick="resetNoticeFilters()">重置</button>
+        <button class="btn primary" onclick="searchNotices()">查询</button>
+      </div>
+    </div>
+  </div>
+  <div class="list-actions">
+    <button class="btn primary compact" onclick="openCreate()">＋ 新增公告</button>
+    <button class="btn compact" onclick="showPage('templates')">公告模板</button>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>公告ID</th><th>公告标题</th><th>所属项目</th><th>发布方式</th><th>发布时间</th><th>到期时间</th><th>状态</th><th>循环状态</th><th>弹窗</th><th>弹窗循环</th><th>创建人</th><th>创建时间</th><th>操作</th></tr></thead>
+      <tbody id="noticeRows"></tbody>
+    </table>
+  </div>
+  <div class="list-pager" id="noticePager"></div>
+</section>
+
+<section id="editorPage" class="hidden">
+  <div class="layout">
+    <div class="stack">
+      <div class="card">
+        <div class="head"><div><div class="title" id="editorTitle">新增公告</div></div></div>
+        <div class="body">
+          <div class="form-stack">
+            <!-- 第一行：投放对象 -->
+            <div class="target-check-row" id="targetRow">
+              <div class="field">
+                <label class="label"><span class="req">*</span>投放项目</label>
+                <select id="targetProject" class="control"><option value="Dana">Dana</option><option value="TW">TW</option></select>
+              </div>
+              <div class="field">
+                <label class="label"><span class="req">*</span>投放 APP</label>
+                <div class="check-panel" id="targetAppPanel">
+                  <div class="check-panel-head" onclick="toggleCheckPanelExpand('targetAppPanel')">
+                    <label class="check-panel-all-wrap" onclick="event.stopPropagation()">
+                      <input class="check-panel-all" type="checkbox" checked onchange="toggleCheckPanelAll('targetAppPanel',this.checked)">全选
+                    </label>
+                    <span class="check-panel-summary" id="targetAppPanelSummary"></span>
+                    <button type="button" class="check-panel-toggle" tabindex="-1">展开</button>
+                  </div>
+                  <div class="check-panel-body" id="targetAppOptions"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label"><span class="req">*</span>APP版本</label>
+                <div class="check-panel" id="targetAppVersionPanel">
+                  <div class="check-panel-head" onclick="toggleCheckPanelExpand('targetAppVersionPanel')">
+                    <label class="check-panel-all-wrap" onclick="event.stopPropagation()">
+                      <input class="check-panel-all" type="checkbox" checked onchange="toggleCheckPanelAll('targetAppVersionPanel',this.checked)">全选
+                    </label>
+                    <span class="check-panel-summary" id="targetAppVersionPanelSummary"></span>
+                    <button type="button" class="check-panel-toggle" tabindex="-1">展开</button>
+                  </div>
+                  <div class="check-panel-body" id="targetAppVersionOptions"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label"><span class="req">*</span>地区选择</label>
+                <div class="check-panel" id="targetRegionPanel">
+                  <div class="check-panel-head" onclick="toggleCheckPanelExpand('targetRegionPanel')">
+                    <label class="check-panel-all-wrap" onclick="event.stopPropagation()">
+                      <input class="check-panel-all" type="checkbox" checked onchange="toggleCheckPanelAll('targetRegionPanel',this.checked)">ALL
+                    </label>
+                    <span class="check-panel-summary" id="targetRegionPanelSummary"></span>
+                    <button type="button" class="check-panel-toggle" tabindex="-1">展开</button>
+                  </div>
+                  <div class="check-panel-body" id="targetRegionOptions"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 第二行：发布方式 / 有效期 / 时间 / 循环（同排动态显隐） -->
+            <div class="grid4 config-row" id="publishConfigRow">
+              <div class="field">
+                <label class="label"><span class="req">*</span>发布方式</label>
+                <select id="publishMode" class="control" onchange="onPublishConfigChange()">
+                  <option value="immediate" selected>即时发布</option>
+                  <option value="scheduled">定时发布</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="label"><span class="req">*</span>公告有效期</label>
+                <select id="validityType" class="control" onchange="onPublishConfigChange()">
+                  <option value="limited" selected>有期限</option>
+                  <option value="permanent">长期有效</option>
+                </select>
+              </div>
+              <div class="field hidden" id="scheduleStartField">
+                <label class="label" id="startTimeLabel"><span class="req">*</span>发布时间</label>
+                <input id="eventStartTime" class="control" type="datetime-local" onfocus="this.dataset.previous=this.value" onchange="onCoreTimeChange(this)">
+              </div>
+              <div class="field" id="expireTimeField">
+                <label class="label"><span class="req">*</span>过期时间</label>
+                <input id="eventEndTime" class="control" type="datetime-local" onfocus="this.dataset.previous=this.value" onchange="onCoreTimeChange(this)">
+              </div>
+              <div class="field hidden" id="repeatRuleField">
+                <label class="label"><span class="req">*</span>循环方式</label>
+                <select id="repeatRule" class="control" onchange="onPublishConfigChange()"></select>
+              </div>
+            </div>
+            <div class="field" style="margin-top:4px">
+              <label class="check-row"><input id="enablePopupCheck" type="checkbox" onchange="onPopupReminderChange()">弹窗提醒</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <div><div class="title">公告内容</div></div>
+        </div>
+        <div class="body" style="padding-bottom:12px">
+          <div class="field"><label class="label">公告模板</label><select id="editorTplSelect" class="control" onchange="applyTemplateFromEditor(this.value)"><option value="">不使用模板</option></select></div>
+        </div>
+        <div class="lang-toolbar">
+          <div class="tabs" id="editorLangTabs"></div>
+          <div class="head-actions">
+            <button class="btn ghost compact" type="button" onclick="openLangSync('notice')">同步</button>
+            <button class="btn compact" type="button" onclick="openParamManager('notice')">参数管理</button>
+          </div>
+        </div>
+        <div class="body">
+          <div class="field"><label class="label"><span class="req">*</span>公告标题</label><input id="titleInput" class="control" placeholder="请填写公告标题（正文与弹窗共用）"></div>
+          <div style="height:14px"></div>
+          <div id="bodyContentPanel">
+            <div class="field">
+              <label class="label"><span class="req">*</span>公告正文</label>
+              <div class="tokens" id="tokenBar" style="margin:0 0 10px"></div>
+              <textarea id="bodyInput" class="control" placeholder="请输入公告正文"></textarea>
+            </div>
+          </div>
+          <div id="popupSettingsRow" class="popup-validity hidden" style="margin-top:16px">
+              <!-- 公告有期限：仅可选期限内起止，不可循环 -->
+              <div id="popupLimitedBlock" class="hidden">
+                <div class="field">
+                  <label class="label"><span class="req">*</span>弹窗有效期</label>
+                  <div class="popup-window-inline">
+                    <input id="popupRangeStart" class="control dt-md" type="datetime-local">
+                    <span class="mid">~</span>
+                    <input id="popupRangeEnd" class="control dt-md" type="datetime-local">
+                  </div>
+                  <div class="popup-hint" style="margin-top:6px">须在公告有效期内；有期限公告不支持弹窗循环</div>
+                </div>
+              </div>
+              <!-- 公告长期有效：可配置弹窗循环窗口 -->
+              <div id="popupPermanentBlock" class="hidden">
+                <div class="grid2" id="popupCycleWindowRow">
+                  <div class="field" id="popupRepeatField">
+                    <label class="label"><span class="req">*</span>弹窗循环</label>
+                    <select id="popupRepeatRule" class="control" onchange="onPopupRepeatChange()">
+                      <option value="none">不循环</option>
+                      <option value="daily">每日</option>
+                      <option value="weekly">每周</option>
+                      <option value="monthly">每月</option>
+                    </select>
+                    <div class="popup-freq-locked hidden" id="popupRepeatLockedText">与公告一致</div>
+                  </div>
+                  <div class="field" id="popupWindowField" data-active="none">
+                    <label class="label"><span class="req">*</span>弹窗展示窗口</label>
+                    <div id="popupWindowNone" class="popup-window-inline">
+                      <input id="popupOnceStart" class="control dt-md" type="datetime-local">
+                      <span class="mid">~</span>
+                      <input id="popupOnceEnd" class="control dt-md" type="datetime-local">
+                    </div>
+                    <div id="popupWindowDaily" class="popup-window-inline">
+                      <span class="mid">每日</span>
+                      <input id="popupDailyStart" class="control time-sm" type="time" value="09:00">
+                      <span class="mid">~</span>
+                      <input id="popupDailyEnd" class="control time-sm" type="time" value="18:00">
+                    </div>
+                    <div id="popupWindowWeekly" class="popup-window-inline">
+                      <select id="popupWeeklyStartDay" class="control wd-sm"></select>
+                      <input id="popupWeeklyStartTime" class="control time-sm" type="time" value="09:00">
+                      <span class="mid">~</span>
+                      <select id="popupWeeklyEndDay" class="control wd-sm"></select>
+                      <input id="popupWeeklyEndTime" class="control time-sm" type="time" value="18:00">
+                    </div>
+                    <div id="popupWindowMonthly" class="popup-window-inline">
+                      <select id="popupMonthlyStartDay" class="control day-sm"></select>
+                      <span class="mid">日</span>
+                      <input id="popupMonthlyStartTime" class="control time-sm" type="time" value="09:00">
+                      <span class="mid">~</span>
+                      <select id="popupMonthlyEndDay" class="control day-sm"></select>
+                      <span class="mid">日</span>
+                      <input id="popupMonthlyEndTime" class="control time-sm" type="time" value="18:00">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+          <div id="popupConfigPanel" class="popup-inline-panel hidden" style="margin-top:16px">
+            <div class="field">
+              <label class="label"><span class="req">*</span>弹窗展示内容</label>
+              <div class="tokens" id="popupTokenBar" style="margin:0 0 10px"></div>
+              <textarea id="popupInput" class="control" placeholder="请输入弹窗展示内容，可插入参数"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <aside class="card preview">
+      <div class="head"><div><div class="title">用户端预览</div></div></div>
+      <div class="body" style="padding-bottom:0">
+        <div class="preview-tz-row">
+          <span class="label">预览时区</span>
+          <select id="previewTzSelect" class="control" onchange="onPreviewTzChange(this)"></select>
+        </div>
+        <div class="preview-mode" id="previewModeBar">
+          <button type="button" class="preview-mode-btn active" id="previewModeBodyBtn" onclick="setPreviewMode('body')">公告正文预览</button>
+          <button type="button" class="preview-mode-btn" id="previewModePopupBtn" onclick="setPreviewMode('popup')" disabled title="请先勾选「弹窗提醒」">弹窗预览</button>
+        </div>
+      </div>
+      <div class="phone">
+        <div class="phoneTop">10:28</div>
+        <div class="phoneBody">
+          <div id="previewBodyView" class="preview-body-view">
+            <div class="article-view">
+              <h3 class="article-title" id="previewTitle"></h3>
+              <p class="article-body" id="previewBody"></p>
+            </div>
+          </div>
+          <div id="previewPopupView" class="preview-popup-view hidden">
+            <div class="popup-mask-demo"></div>
+            <div class="popup-card-demo">
+              <div class="popup-title" id="previewPopupTitle">弹窗预览</div>
+              <p class="popup-text" id="previewPopup"></p>
+              <div class="popup-actions"><button type="button" class="popup-detail-btn" title="查看公告详情" aria-label="查看公告详情"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <div class="footer-bar">
+    <button class="btn ghost" onclick="cancelEdit()">取消</button>
+    <button class="btn primary compact" onclick="saveNotice()">保存</button>
+  </div>
+</section>
+
+<section id="templatesPage" class="hidden">
+  <div class="list-actions" style="margin-top:0">
+    <button class="btn primary compact" onclick="openTemplateEditor()">＋ 新增模板</button>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>模板名称</th><th>模板说明</th><th>弹窗</th><th>创建人</th><th>创建时间</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody id="templateRows"></tbody>
+    </table>
+  </div>
+  <div class="footer-bar">
+    <button class="btn ghost" onclick="showPage('list')">返回列表</button>
+  </div>
+</section>
+
+<section id="templateEditorPage" class="hidden">
+  <div class="layout">
+    <div class="stack">
+      <div class="card">
+        <div class="head">
+          <div><div class="title" id="templateEditorTitle">新增公告模板</div></div>
+        </div>
+        <div class="lang-toolbar">
+          <div class="tabs" id="templateLangTabs"></div>
+          <div class="head-actions">
+            <button class="btn ghost compact" type="button" onclick="openLangSync('template')">同步</button>
+            <button class="btn compact" type="button" onclick="openParamManager('template')">参数管理</button>
+          </div>
+        </div>
+        <div class="body">
+          <div class="field" style="margin-bottom:14px">
+            <label class="check-row"><input id="templateEnablePopupCheck" type="checkbox" onchange="onTemplatePopupReminderChange()">弹窗提醒</label>
+          </div>
+          <div class="field"><label class="label"><span class="req">*</span>公告标题</label><input id="templateTitleInput" class="control" placeholder="请填写公告标题（正文与弹窗共用）"></div>
+          <div style="height:14px"></div>
+          <div id="templateBodyContentPanel">
+            <div class="field">
+              <label class="label"><span class="req">*</span>公告正文</label>
+              <div class="tokens" id="templateTokenBar" style="margin:0 0 10px"></div>
+              <textarea id="templateBodyInput" class="control" placeholder="请输入公告正文"></textarea>
+            </div>
+          </div>
+          <div id="templatePopupContentPanel" class="popup-inline-panel hidden" style="margin-top:16px">
+            <div class="field">
+              <label class="label"><span class="req">*</span>弹窗展示内容</label>
+              <div class="tokens" id="templatePopupTokenBar" style="margin:0 0 10px"></div>
+              <textarea id="templatePopupInput" class="control" placeholder="请输入弹窗展示内容，可插入参数"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="card preview">
+      <div class="head"><div><div class="title">用户端预览</div></div></div>
+      <div class="body" style="padding-bottom:0">
+        <div class="preview-tz-row">
+          <span class="label">预览时区</span>
+          <select id="templatePreviewTzSelect" class="control" onchange="onPreviewTzChange(this)"></select>
+        </div>
+        <div class="preview-mode" id="templatePreviewModeBar">
+          <button type="button" class="preview-mode-btn active" id="templatePreviewModeBodyBtn" onclick="setTemplatePreviewMode('body')">公告正文预览</button>
+          <button type="button" class="preview-mode-btn" id="templatePreviewModePopupBtn" onclick="setTemplatePreviewMode('popup')" disabled title="请先勾选「弹窗提醒」">弹窗预览</button>
+        </div>
+      </div>
+      <div class="phone">
+        <div class="phoneTop">10:28</div>
+        <div class="phoneBody">
+          <div id="templatePreviewBodyView" class="preview-body-view">
+            <div class="article-view">
+              <h3 class="article-title" id="templatePreviewTitle"></h3>
+              <p class="article-body" id="templatePreviewBody"></p>
+            </div>
+          </div>
+          <div id="templatePreviewPopupView" class="preview-popup-view hidden">
+            <div class="popup-mask-demo"></div>
+            <div class="popup-card-demo">
+              <div class="popup-title" id="templatePreviewPopupTitle">弹窗预览</div>
+              <p class="popup-text" id="templatePreviewPopup"></p>
+              <div class="popup-actions"><button type="button" class="popup-detail-btn" title="查看公告详情" aria-label="查看公告详情"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <div class="footer-bar">
+    <button class="btn ghost" onclick="showPage('templates')">取消</button>
+    <button class="btn primary compact" onclick="saveTemplate()">保存模板</button>
+  </div>
+</section>
+
+    </div>
+  </section>
+
+<div id="modalMask" class="modal-mask hidden" onclick="closeModal(event)">
+  <div class="modal-panel" id="modalPanel" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div>
+        <div class="title" id="modalTitle">详情</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">关闭</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot">
+      <button class="btn ghost" id="modalClose" onclick="closeModal()">关闭</button>
+      <button class="btn primary hidden" id="modalPrimary">确认</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const LANGS=[
+  {code:'en',name:'英文',locale:'en-GB'},
+  {code:'zhHant',name:'繁体中文',locale:'zh-TW'},
+  {code:'id',name:'印尼',locale:'id-ID'},
+  {code:'vi',name:'越南',locale:'vi-VN'},
+  {code:'enIN',name:'印度英文',locale:'en-IN'},
+  {code:'fil',name:'菲律宾',locale:'fil-PH'},
+  {code:'es',name:'西班牙语',locale:'es-ES'},
+  {code:'pt',name:'葡萄牙语',locale:'pt-BR'},
+  {code:'th',name:'泰国',locale:'th-TH'}
+];
+const DEFAULT_LANG='en';
+const langNames=Object.fromEntries(LANGS.map(l=>[l.code,l.name]));
+const langLocales=Object.fromEntries(LANGS.map(l=>[l.code,l.locale]));
+
+function emptyCopy(){
+  return Object.fromEntries(LANGS.map(l=>[l.code,{title:'',body:'',popup:''}]));
+}
+function ensureCopy(src){
+  const out=emptyCopy();
+  LANGS.forEach(({code})=>{
+    const c=src&&src[code]?src[code]:{};
+    out[code]={title:c.title||'',body:c.body||'',popup:c.popup||''};
+  });
+  return out;
+}
+function buildLangTabsHtml(activeCode,attr='data-lang',extraClass=''){
+  return LANGS.map(l=>`<button type="button" class="tab${extraClass?(' '+extraClass):''}${l.code===activeCode?' active':''}" ${attr}="${l.code}">${l.name}</button>`).join('');
+}
+function buildLangOptionsHtml(activeCode){
+  return LANGS.map(l=>`<option value="${l.code}"${l.code===activeCode?' selected':''}>${l.name}</option>`).join('');
+}
+function primaryCopyTitle(c){
+  if(!c)return '';
+  // 优先英文标题（保存必填语言）
+  return (c.en?.title||c.zhHant?.title||LANGS.map(l=>c[l.code]?.title).find(t=>t&&t.trim())||'').trim();
+}
+function findMissingLang(copyObj,fields){
+  // 仅校验英文；其他语言选填
+  const code=DEFAULT_LANG;
+  const c=copyObj?.[code]||{};
+  if(fields.some(f=>!(c[f]||'').trim())){
+    const name=langNames[code]||'英文';
+    return {code,name};
+  }
+  return null;
+}
+
+function sampleMaintCopy(){
+  return ensureCopy({
+    en:{title:'System Maintenance Notice',body:'Dear ${name}, system maintenance will begin at ${start_time} and is expected to end at ${end_time}. Full service resumes at ${resume_time}.',popup:''},
+    zhHant:{title:'系統維護通知',body:'尊敬的 ${name}，系統維護將於 ${start_time} 開始，預計於 ${end_time} 結束，服務將於 ${resume_time} 全面恢復。',popup:''},
+    id:{title:'Pemberitahuan Pemeliharaan Sistem',body:'Yth. ${name}, pemeliharaan sistem akan dimulai pada ${start_time} dan diperkirakan selesai pada ${end_time}. Layanan pulih sepenuhnya pada ${resume_time}.',popup:''},
+    vi:{title:'Thông báo bảo trì hệ thống',body:'Kính gửi ${name}, bảo trì hệ thống sẽ bắt đầu lúc ${start_time} và dự kiến kết thúc lúc ${end_time}. Dịch vụ khôi phục hoàn toàn lúc ${resume_time}.',popup:''},
+    enIN:{title:'System Maintenance Notice',body:'Dear ${name}, system maintenance will begin at ${start_time} and is expected to end at ${end_time}. Full service resumes at ${resume_time}.',popup:''},
+    fil:{title:'Abiso sa Pagpapanatili ng Sistema',body:'Dear ${name}, magsisimula ang maintenance sa ${start_time} at inaasahang matatapos sa ${end_time}. Ganap na babalik ang serbisyo sa ${resume_time}.',popup:''},
+    es:{title:'Aviso de mantenimiento del sistema',body:'Estimado/a ${name}, el mantenimiento comenzará a las ${start_time} y se espera que termine a las ${end_time}. El servicio se restablecerá por completo a las ${resume_time}.',popup:''},
+    pt:{title:'Aviso de manutenção do sistema',body:'Prezado(a) ${name}, a manutenção começará em ${start_time} e deve terminar em ${end_time}. O serviço será totalmente restaurado em ${resume_time}.',popup:''},
+    th:{title:'ประกาศบำรุงรักษาระบบ',body:'เรียน ${name} ระบบจะเริ่มบำรุงรักษาเวลา ${start_time} และคาดว่าจะสิ้นสุดเวลา ${end_time} บริการจะกลับมาใช้งานได้เต็มที่เวลา ${resume_time}',popup:''}
+  });
+}
+function sampleEventCopy(){
+  return ensureCopy({
+    en:{title:'Limited-Time Event Is Live',body:'Hi ${name}, the event runs during ${activity_window}. Rewards are sent at ${reward_time}.',popup:'Hi ${name}!\nEvent is live!\nTime: ${activity_window}\nRewards: ${reward_time}'},
+    zhHant:{title:'限時活動正式開啟',body:'親愛的 ${name}，活動將於 ${activity_window} 開展，獎勵將於 ${reward_time} 發放，快來參與吧！',popup:'${name}，活動火熱進行中！時間：${activity_window}\n獎勵發放：${reward_time}'},
+    id:{title:'Acara Terbatas Telah Dimulai',body:'Hai ${name}, acara berlangsung pada ${activity_window}. Hadiah dibagikan pada ${reward_time}.',popup:'Hai ${name}!\nAcara sedang berlangsung!\nWaktu: ${activity_window}\nHadiah: ${reward_time}'},
+    vi:{title:'Sự kiện giới hạn đã bắt đầu',body:'Xin chào ${name}, sự kiện diễn ra trong ${activity_window}. Phần thưởng được gửi lúc ${reward_time}.',popup:'Xin chào ${name}!\nSự kiện đang diễn ra!\nThời gian: ${activity_window}\nPhần thưởng: ${reward_time}'},
+    enIN:{title:'Limited-Time Event Is Live',body:'Hi ${name}, the event runs during ${activity_window}. Rewards are sent at ${reward_time}.',popup:'Hi ${name}!\nEvent is live!\nTime: ${activity_window}\nRewards: ${reward_time}'},
+    fil:{title:'Nagsimula na ang Limited-Time Event',body:'Hi ${name}, tumatakbo ang event sa ${activity_window}. Ipapadala ang rewards sa ${reward_time}.',popup:'Hi ${name}!\nLive na ang event!\nOras: ${activity_window}\nRewards: ${reward_time}'},
+    es:{title:'El evento por tiempo limitado ya está activo',body:'Hola ${name}, el evento se realiza durante ${activity_window}. Las recompensas se envían a las ${reward_time}.',popup:'¡Hola ${name}!\n¡El evento está en vivo!\nHora: ${activity_window}\nRecompensas: ${reward_time}'},
+    pt:{title:'O evento por tempo limitado já começou',body:'Olá ${name}, o evento ocorre durante ${activity_window}. As recompensas são enviadas em ${reward_time}.',popup:'Olá ${name}!\nO evento está ao vivo!\nHorário: ${activity_window}\nRecompensas: ${reward_time}'},
+    th:{title:'กิจกรรมแบบจำกัดเวลาเปิดแล้ว',body:'สวัสดี ${name} กิจกรรมจัดขึ้นในช่วง ${activity_window} และจะส่งรางวัลเวลา ${reward_time}',popup:'สวัสดี ${name}!\nกิจกรรมกำลังดำเนินการ!\nเวลา: ${activity_window}\nรางวัล: ${reward_time}'}
+  });
+}
+
+function sampleSimpleCopy(titleZh,bodyZh,titleEn,bodyEn,popupZh='',popupEn=''){
+  return ensureCopy({
+    en:{title:titleEn,body:bodyEn,popup:popupEn},
+    zhHant:{title:titleZh,body:bodyZh,popup:popupZh},
+    id:{title:titleEn,body:bodyEn,popup:popupEn},
+    vi:{title:titleEn,body:bodyEn,popup:popupEn},
+    enIN:{title:titleEn,body:bodyEn,popup:popupEn},
+    fil:{title:titleEn,body:bodyEn,popup:popupEn},
+    es:{title:titleEn,body:bodyEn,popup:popupEn},
+    pt:{title:titleEn,body:bodyEn,popup:popupEn},
+    th:{title:titleEn,body:bodyEn,popup:popupEn}
+  });
+}
+
+let copy=sampleMaintCopy();
+let lang=DEFAULT_LANG,editing=false,editingPublished=false,editingNoticeId=null,enablePopupDisplay=false,previewMode='body',contentEditMode='body';
+
+const BASE_TZ='Africa/Nairobi'; // 固定 GMT+3
+const BASE_TZ_LABEL='GMT+3';
+let baseTz=BASE_TZ;
+/** 用户端预览时区（与录入基准时区解耦，用于换算展示） */
+const PREVIEW_TZ_OPTIONS=[
+  {value:'Africa/Nairobi',label:'GMT+3 东非 / Nairobi'},
+  {value:'Asia/Jakarta',label:'GMT+7 印尼西部 / Jakarta'},
+  {value:'Asia/Bangkok',label:'GMT+7 泰国 / Bangkok'},
+  {value:'Asia/Ho_Chi_Minh',label:'GMT+7 越南 / Ho Chi Minh'},
+  {value:'Asia/Singapore',label:'GMT+8 新加坡 / Singapore'},
+  {value:'Asia/Shanghai',label:'GMT+8 中国 / Shanghai'},
+  {value:'Asia/Manila',label:'GMT+8 菲律宾 / Manila'},
+  {value:'Asia/Kolkata',label:'GMT+5:30 印度 / Kolkata'},
+  {value:'Europe/London',label:'GMT+0/+1 英国 / London'},
+  {value:'America/Sao_Paulo',label:'GMT-3 巴西 / São Paulo'},
+  {value:'America/Mexico_City',label:'GMT-6 墨西哥 / Mexico City'}
+];
+function detectLocalTz(){
+  try{return Intl.DateTimeFormat().resolvedOptions().timeZone||BASE_TZ;}
+  catch(_e){return BASE_TZ;}
+}
+function formatGmtOffsetLabel(tz){
+  try{
+    const parts=new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'shortOffset'}).formatToParts(new Date());
+    const name=parts.find(p=>p.type==='timeZoneName')?.value||'';
+    return name.replace(/^UTC/,'GMT')||'GMT';
+  }catch(_e){return 'GMT';}
+}
+function ensurePreviewTzOption(tz){
+  if(!tz||PREVIEW_TZ_OPTIONS.some(o=>o.value===tz)) return;
+  const city=(tz.split('/').pop()||tz).replace(/_/g,' ');
+  PREVIEW_TZ_OPTIONS.unshift({value:tz,label:`${formatGmtOffsetLabel(tz)} 当前时区 / ${city}`});
+}
+const LOCAL_TZ=detectLocalTz();
+ensurePreviewTzOption(LOCAL_TZ);
+let previewTz=LOCAL_TZ;
+function previewTzLabel(tz){
+  const opt=PREVIEW_TZ_OPTIONS.find(o=>o.value===tz);
+  if(opt){
+    const m=String(opt.label).match(/^(GMT[^\s]+)/);
+    if(m) return m[1];
+  }
+  return formatGmtOffsetLabel(tz||previewTz)||BASE_TZ_LABEL;
+}
+function buildPreviewTzOptionsHtml(selected){
+  const cur=selected||previewTz;
+  return PREVIEW_TZ_OPTIONS.map(o=>{
+    const isLocal=o.value===LOCAL_TZ;
+    const label=isLocal&&!String(o.label).includes('当前')?`${o.label}（当前）`:o.label;
+    return `<option value="${o.value}"${o.value===cur?' selected':''}>${label}</option>`;
+  }).join('');
+}
+function initPreviewTzSelects(){
+  ['previewTzSelect','templatePreviewTzSelect'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=buildPreviewTzOptionsHtml(previewTz);
+  });
+}
+function onPreviewTzChange(el){
+  previewTz=el?.value||LOCAL_TZ||BASE_TZ;
+  ['previewTzSelect','templatePreviewTzSelect'].forEach(id=>{
+    const s=document.getElementById(id);
+    if(s&&s!==el) s.value=previewTz;
+  });
+  renderPreview();
+  renderTemplatePreview();
+}
+let paramManagerOpen=false;
+let paramSource='notice'; // notice | template
+let paramEditIndex=null; // null=未编辑，-1=新增中，>=0=编辑第 i 条
+let editingTemplateId=null;
+let templateLang=null;
+let templateEnablePopupDisplay=false;
+let templatePreviewMode='body';
+let templateDraftParams=[];
+let templateDraftCopy=emptyCopy();
+
+// 固定参数：系统默认提供，不可新增/编辑/删除
+const FIXED_PARAMS=[
+  {name:'name',desc:'姓名',type:'fixed',value:'名字'},
+  {name:'timezone',desc:'时区',type:'fixed',value:'GMT+3'}
+];
+const FIXED_PARAM_NAMES=new Set(FIXED_PARAMS.map(p=>p.name));
+
+function isFixedParam(p){
+  return !!(p&&(p.type==='fixed'||FIXED_PARAM_NAMES.has(p.name)));
+}
+function stripFixedParams(list){
+  return (list||[]).filter(p=>!isFixedParam(p)).map(normalizeParam);
+}
+function ensureFixedParams(list){
+  const fixed=deepCopy(FIXED_PARAMS).map(p=>{
+    if(p.name==='timezone') p.value=BASE_TZ_LABEL;
+    return p;
+  });
+  return fixed.concat(stripFixedParams(list));
+}
+function paramToken(name){
+  return '${'+name+'}';
+}
+
+// 公告自定义参数：时间 / 时间区间；精度：日期 / 日期时间 / 时间
+let noticeParams=[];
+const defaultParams=[
+  {name:'start_time',desc:'开始时间',type:'time',precision:'datetime',value:'2026-07-20T09:00'},
+  {name:'end_time',desc:'结束时间',type:'time',precision:'datetime',value:'2026-07-20T10:00'},
+  {name:'resume_time',desc:'恢复时间',type:'time',precision:'datetime',value:'2026-07-20T12:00'}
+];
+
+// 公告模板（模拟数据）
+let templates=[
+  {id:1,name:'系统维护模板',desc:'停机维护类公告通用模板',creator:'Admin',updated:'2026-07-01 10:00',enabled:true,enablePopup:false,
+   copy:sampleMaintCopy(),
+   params:[
+     {name:'start_time',desc:'开始时间',type:'time',precision:'datetime',value:'2026-07-20T09:00'},
+     {name:'end_time',desc:'结束时间',type:'time',precision:'datetime',value:'2026-07-20T10:00'},
+     {name:'resume_time',desc:'恢复时间',type:'time',precision:'datetime',value:'2026-07-20T12:00'}
+   ]},
+  {id:2,name:'活动上线模板',desc:'运营活动开始/结束通知模板',creator:'Jenny',updated:'2026-07-05 15:30',enabled:true,enablePopup:true,
+   copy:sampleEventCopy(),
+   params:[
+     {name:'activity_window',desc:'活动时间',type:'time_range',precision:'datetime',start:'2026-08-01T10:00',end:'2026-08-07T22:00'},
+     {name:'reward_time',desc:'奖励发放时间',type:'time',precision:'datetime',value:'2026-08-08T10:00'},
+     {name:'signup_period',desc:'报名日期',type:'time_range',precision:'date',start:'2026-07-20',end:'2026-07-31'}
+   ]},
+  {id:3,name:'版本更新模板',desc:'App 版本强制/建议更新通知',creator:'Ken',updated:'2026-07-08 11:20',enabled:true,enablePopup:true,
+   copy:sampleSimpleCopy('版本更新提醒','親愛的 ${name}，請於 ${start_time} 前更新至最新版本，以獲得更好體驗。','Version Update Reminder','Dear ${name}, please update to the latest version before ${start_time} for a better experience.','請儘快更新','Please update soon'),
+   params:[{name:'start_time',desc:'更新截止时间',type:'time',precision:'datetime',value:'2026-07-25T23:59'}]},
+  {id:4,name:'支付异常模板',desc:'支付通道异常与恢复通知',creator:'Mina',updated:'2026-07-09 09:40',enabled:true,enablePopup:false,
+   copy:sampleSimpleCopy('支付服務異常通知','${name}，支付通道將於 ${start_time} ~ ${end_time} 暫時不可用，請稍後重試。','Payment Service Disruption','${name}, payment channels will be unavailable from ${start_time} to ${end_time}. Please try again later.'),
+   params:[
+     {name:'start_time',desc:'开始时间',type:'time',precision:'datetime',value:'2026-07-18T01:00'},
+     {name:'end_time',desc:'结束时间',type:'time',precision:'datetime',value:'2026-07-18T03:00'}
+   ]},
+  {id:5,name:'节日活动模板',desc:'节日促销/限时活动通用模板',creator:'Jenny',updated:'2026-07-10 16:00',enabled:true,enablePopup:true,
+   copy:sampleSimpleCopy('節日活動開啟','親愛的 ${name}，活動時間：${activity_window}，獎勵發放：${reward_time}。','Festival Event Live','Hi ${name}, event time: ${activity_window}. Rewards at ${reward_time}.','活動進行中','Event in progress'),
+   params:[
+     {name:'activity_window',desc:'活动时间',type:'time_range',precision:'date',start:'2026-08-15',end:'2026-08-20'},
+     {name:'reward_time',desc:'奖励时间',type:'time',precision:'datetime',value:'2026-08-21T10:00'}
+   ]},
+  {id:6,name:'账户安全模板',desc:'异常登录/安全提醒',creator:'Admin',updated:'2026-07-11 14:15',enabled:true,enablePopup:true,
+   copy:sampleSimpleCopy('賬戶安全提醒','親愛的 ${name}，檢測到異常登錄行為，請於 ${start_time} 前完成安全驗證。','Account Security Alert','Dear ${name}, unusual login detected. Please complete verification before ${start_time}.','請立即驗證','Verify now'),
+   params:[{name:'start_time',desc:'验证截止',type:'time',precision:'datetime',value:'2026-07-16T18:00'}]},
+  {id:7,name:'KYC 截止模板',desc:'KYC 资料补全提醒',creator:'Leo',updated:'2026-07-12 10:05',enabled:false,enablePopup:false,
+   copy:sampleSimpleCopy('KYC 資料補全提醒','尊敬的 ${name}，請於 ${end_time} 前完成 KYC，以免影響提現。','KYC Completion Reminder','Dear ${name}, please complete KYC before ${end_time} to avoid withdrawal limits.'),
+   params:[{name:'end_time',desc:'截止时间',type:'time',precision:'date',value:'2026-07-31'}]},
+  {id:8,name:'每日签到模板',desc:'循环签到活动提醒',creator:'Jenny',updated:'2026-07-13 09:00',enabled:true,enablePopup:true,
+   copy:sampleSimpleCopy('每日簽到提醒','${name}，每日 ${activity_window} 開放簽到，別錯過獎勵！','Daily Check-in Reminder','Hi ${name}, check-in is open daily during ${activity_window}. Don’t miss rewards!','去簽到','Check in'),
+   params:[{name:'activity_window',desc:'签到时段',type:'time_range',precision:'time',start:'09:00',end:'23:59'}]},
+  {id:9,name:'客服升级模板',desc:'客服服务时段调整通知',creator:'Mina',updated:'2026-07-14 17:30',enabled:true,enablePopup:false,
+   copy:sampleSimpleCopy('客服服務時段調整','${name}，客服在線時間調整為 ${activity_window}，感謝理解。','Customer Support Hours Update','Hi ${name}, support hours are updated to ${activity_window}. Thanks for your understanding.'),
+   params:[{name:'activity_window',desc:'服务时段',type:'time_range',precision:'time',start:'08:00',end:'22:00'}]},
+  {id:10,name:'旧活动归档模板',desc:'历史活动复用模板（已停用）',creator:'Ken',updated:'2026-06-20 12:00',enabled:false,enablePopup:false,
+   copy:sampleSimpleCopy('歷史活動通知','本模板已停用，僅供參考。','Legacy Campaign Notice','This template is disabled and kept for reference only.'),
+   params:[]}
+];
+let templateSeq=11;
+
+// 公告列表：一条公告一条记录；循环为公告属性，不按期次拆分行
+// 公告ID：统一为 A + 4位流水号（如 A0006），不使用 -1/-2 期次后缀
+// 公告状态：待发布 | 展示中 | 已下架 | 已归档 | 已取消
+// 循环状态：无循环 | 循环中 | 已终止（仅人工终止；默认无限循环）
+let baseIdSeq=21;
+const cycleRules={
+  'A0006':{summary:'每周一',detail:'每周一 10:00 GMT+3 定时发布，长期有效',duration:'长期有效',repeatType:'weekly',terminated:false,creator:'Jenny',createdAt:'2026-07-05 15:30'},
+  'A0007':{summary:'每周一',detail:'每周一 10:00 GMT+3 定时发布，长期有效',duration:'长期有效',repeatType:'weekly',terminated:true,creator:'Jenny',createdAt:'2026-07-15 18:40'},
+  'A0008':{summary:'每天',detail:'每天 09:00 GMT+3 定时发布，长期有效',duration:'长期有效',repeatType:'daily',terminated:false,creator:'Jenny',createdAt:'2026-07-13 09:05'},
+  'A0016':{summary:'每月1日',detail:'每月 1 日 09:00 GMT+3 定时发布，长期有效',duration:'长期有效',repeatType:'monthly_day',terminated:true,creator:'Admin',createdAt:'2026-06-20 11:00'}
+};
+function formatBaseId(seq){
+  return 'A'+String(seq).padStart(4,'0');
+}
+function nextBaseId(){
+  return formatBaseId(++baseIdSeq);
+}
+let noticeRecords=[
+  {noticeId:'A0001',baseId:'A0001',name:'夏日嘉年华活动',project:'TW',publishMode:'定时发布',publishTime:'2026-08-01 10:00',expireTime:'2026-08-07 22:00',cycleId:'',cycleSummary:'',enablePopup:true,popupCycleSummary:'不循环',status:'待发布',creator:'Jenny',createdAt:'2026-07-10 16:08'},
+  {noticeId:'A0002',baseId:'A0002',name:'提现限额升级说明',project:'Dana',publishMode:'定时发布',publishTime:'2026-07-22 12:00',expireTime:'2026-08-01 12:00',cycleId:'',cycleSummary:'',enablePopup:false,popupCycleSummary:'',status:'待发布',creator:'Ken',createdAt:'2026-07-15 11:00'},
+  {noticeId:'A0003',baseId:'A0003',name:'合伙人佣金规则更新',project:'TW',publishMode:'定时发布',publishTime:'2026-07-28 09:00',expireTime:'2026-09-30 23:59',cycleId:'',cycleSummary:'',enablePopup:false,popupCycleSummary:'',status:'待发布',creator:'Mina',createdAt:'2026-07-17 13:48'},
+  {noticeId:'A0004',baseId:'A0004',name:'欧洲区假期安排',project:'TW',publishMode:'定时发布',publishTime:'2026-08-10 00:00',expireTime:'2026-08-18 23:59',cycleId:'',cycleSummary:'',enablePopup:false,popupCycleSummary:'',status:'待发布',creator:'Leo',createdAt:'2026-07-16 15:22'},
+  {noticeId:'A0005',baseId:'A0005',name:'双十一活动预告',project:'Dana',publishMode:'定时发布',publishTime:'2026-11-01 00:00',expireTime:'2026-11-12 23:59',cycleId:'',cycleSummary:'',enablePopup:true,popupCycleSummary:'不循环',status:'待发布',creator:'Admin',createdAt:'2026-07-16 09:12'},
+  {noticeId:'A0006',baseId:'A0006',name:'每周福利提醒',project:'TW',publishMode:'定时发布',publishTime:'2026-07-21 10:00',expireTime:'长期有效',cycleId:'A0006',cycleSummary:'每周一 10:00',enablePopup:true,popupCycleSummary:'每周',status:'展示中',creator:'Jenny',createdAt:'2026-07-05 15:30'},
+  {noticeId:'A0007',baseId:'A0007',name:'新手礼包领取提醒',project:'TW',publishMode:'定时发布',publishTime:'2026-07-21 10:00',expireTime:'长期有效',cycleId:'A0007',cycleSummary:'每周一 10:00',enablePopup:true,popupCycleSummary:'每周',status:'展示中',creator:'Jenny',createdAt:'2026-07-15 18:40'},
+  {noticeId:'A0008',baseId:'A0008',name:'每日签到奖励开启',project:'Dana',publishMode:'定时发布',publishTime:'2026-07-21 09:00',expireTime:'长期有效',cycleId:'A0008',cycleSummary:'每日 09:00',enablePopup:true,popupCycleSummary:'每日',status:'展示中',creator:'Jenny',createdAt:'2026-07-13 09:05'},
+  {noticeId:'A0009',baseId:'A0009',name:'新版本强制更新',project:'Dana',publishMode:'即时发布',publishTime:'2026-07-08 11:25',expireTime:'2026-07-25 23:59',cycleId:'',cycleSummary:'',enablePopup:true,popupCycleSummary:'不循环',status:'展示中',creator:'Ken',createdAt:'2026-07-08 11:25'},
+  {noticeId:'A0010',baseId:'A0010',name:'KYC 资料补全通知',project:'TW',publishMode:'定时发布',publishTime:'2026-07-15 09:00',expireTime:'2026-07-31 23:59',cycleId:'',cycleSummary:'',enablePopup:true,popupCycleSummary:'不循环',status:'展示中',creator:'Leo',createdAt:'2026-07-12 10:10'},
+  {noticeId:'A0011',baseId:'A0011',name:'客服服务时段调整',project:'TW',publishMode:'即时发布',publishTime:'2026-07-14 17:35',expireTime:'长期有效',cycleId:'',cycleSummary:'',enablePopup:false,popupCycleSummary:'',status:'展示中',creator:'Mina',createdAt:'2026-07-14 17:35'},
+  {noticeId:'A0012',baseId:'A0012',name:'异常登录安全提醒',project:'Dana',publishMode:'即时发布',publishTime:'2026-07-11 14:20',expireTime:'2026-07-16 18:00',cycleId:'',cycleSummary:'',enablePopup:true,popupCycleSummary:'不循环',status:'已下架',creator:'Admin',createdAt:'2026-07-11 14:20'},
+  {noticeId:'A0013',baseId:'A0013',name:'支付通道临时维护',project:'Dana',publishMode:'定时发布',publishTime:'2026-07-18 01:00',expireTime:'2026-07-18 03:00',cycleId:'',cycleSummary:'',enablePopup:false,popupCycleSummary:'',status:'已归档',creator:'Mina',createdAt:'2026-07-09 09:42'},
+  {noticeId:'A0014',baseId:'A0014',name:'系统维护通知',project:'Dana',publishMode:'定时发布',publishTime:'2026-07-20 09:00',expireTime:'2026-07-20 10:00',cycleId:'',cycleSummary:'',enablePopup:false,popupCycleSummary:'',status:'已取消',creator:'Admin',createdAt:'2026-07-01 10:00'},
+  {noticeId:'A0015',baseId:'A0015',name:'旧春节活动复盘',project:'Dana',publishMode:'即时发布',publishTime:'2026-02-01 10:00',expireTime:'2026-02-20 23:59',cycleId:'',cycleSummary:'',enablePopup:false,popupCycleSummary:'',status:'已归档',creator:'Ken',createdAt:'2026-02-01 10:00'},
+  {noticeId:'A0016',baseId:'A0016',name:'月度对账提醒',project:'Dana',publishMode:'定时发布',publishTime:'2026-07-01 09:00',expireTime:'长期有效',cycleId:'A0016',cycleSummary:'每月 1 日 09:00',enablePopup:true,popupCycleSummary:'每月',status:'已归档',creator:'Admin',createdAt:'2026-06-20 11:00'},
+  {noticeId:'A0017',baseId:'A0017',name:'周末活动预热',project:'TW',publishMode:'定时发布',publishTime:'2026-07-25 18:00',expireTime:'2026-07-27 23:59',cycleId:'',cycleSummary:'',enablePopup:true,popupCycleSummary:'不循环',status:'待发布',creator:'Jenny',createdAt:'2026-07-18 09:20'},
+  {noticeId:'A0018',baseId:'A0018',name:'积分商城上新',project:'Dana',publishMode:'即时发布',publishTime:'2026-07-10 12:00',expireTime:'2026-07-20 23:59',cycleId:'',cycleSummary:'',enablePopup:false,popupCycleSummary:'',status:'已归档',creator:'Ken',createdAt:'2026-07-10 12:00'},
+  {noticeId:'A0019',baseId:'A0019',name:'防诈骗安全提醒',project:'TW',publishMode:'即时发布',publishTime:'2026-07-12 08:30',expireTime:'长期有效',cycleId:'',cycleSummary:'',enablePopup:true,popupCycleSummary:'不循环',status:'展示中',creator:'Admin',createdAt:'2026-07-12 08:30'},
+  {noticeId:'A0020',baseId:'A0020',name:'银行卡绑定优惠',project:'Dana',publishMode:'定时发布',publishTime:'2026-07-30 10:00',expireTime:'2026-08-15 23:59',cycleId:'',cycleSummary:'',enablePopup:true,popupCycleSummary:'不循环',status:'待发布',creator:'Mina',createdAt:'2026-07-18 14:05'},
+  {noticeId:'A0021',baseId:'A0021',name:'旧版 App 停服说明',project:'TW',publishMode:'即时发布',publishTime:'2026-05-01 00:00',expireTime:'2026-05-31 23:59',cycleId:'',cycleSummary:'',enablePopup:false,popupCycleSummary:'',status:'已归档',creator:'Leo',createdAt:'2026-04-28 16:40'}
+];
+const NOTICE_PAGE_SIZE=20;
+let noticePage=1;
+
+function deepCopy(o){return JSON.parse(JSON.stringify(o))}
+
+const TARGET_APP_OPTIONS=['DANA App','TW App','Partner App','BtcDana','ForexDana','GoTrading','FDTrek'];
+const TARGET_APP_VERSION_OPTIONS=['1.0.0','1.2.0','2.0.0','2.1.5','3.0.0','Latest'];
+const TARGET_REGION_OPTIONS=[
+  {value:'+62 [ID]',label:'+62 [ID]'},
+  {value:'+84 [VN]',label:'+84 [VN]'},
+  {value:'+63 [PH]',label:'+63 [PH]'},
+  {value:'+234 [NG]',label:'+234 [NG]'},
+  {value:'+52 [MX]',label:'+52 [MX]'},
+  {value:'+66 [TH]',label:'+66 [TH]'},
+  {value:'+91 [IN]',label:'+91 [IN]'},
+  {value:'+55 [BR]',label:'+55 [BR]'},
+  {value:'OTHER',label:'OTHER'}
+];
+
+function renderCheckPanelOptions(containerId,options,panelId,selected){
+  const box=document.getElementById(containerId);
+  if(!box)return;
+  const selectedSet=new Set(selected||[]);
+  box.innerHTML=options.map(opt=>{
+    const value=typeof opt==='string'?opt:opt.value;
+    const label=typeof opt==='string'?opt:opt.label;
+    const checked=selectedSet.has(value)?'checked':'';
+    return `<label class="check-panel-item"><input type="checkbox" value="${value}" ${checked} onchange="refreshCheckPanelAll('${panelId}')"><span title="${label}">${label}</span></label>`;
+  }).join('');
+  refreshCheckPanelAll(panelId);
+}
+
+function initTargetCheckPanels(defaults){
+  const appSelected=defaults?.apps||TARGET_APP_OPTIONS.slice();
+  const versionSelected=defaults?.versions||TARGET_APP_VERSION_OPTIONS.slice();
+  const regionSelected=defaults?.regions||TARGET_REGION_OPTIONS.map(o=>o.value);
+  renderCheckPanelOptions('targetAppOptions',TARGET_APP_OPTIONS,'targetAppPanel',appSelected);
+  renderCheckPanelOptions('targetAppVersionOptions',TARGET_APP_VERSION_OPTIONS,'targetAppVersionPanel',versionSelected);
+  renderCheckPanelOptions('targetRegionOptions',TARGET_REGION_OPTIONS,'targetRegionPanel',regionSelected);
+  ['targetAppPanel','targetAppVersionPanel','targetRegionPanel'].forEach(id=>{
+    const panel=document.getElementById(id);
+    if(panel) panel.classList.remove('is-open');
+    updateCheckPanelToggle(id);
+  });
+}
+
+function toggleCheckPanelExpand(panelId){
+  const panel=document.getElementById(panelId);
+  if(!panel)return;
+  const willOpen=!panel.classList.contains('is-open');
+  // 同时只展开一个，避免互相遮挡
+  ['targetAppPanel','targetAppVersionPanel','targetRegionPanel'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.classList.toggle('is-open',willOpen&&id===panelId);
+    updateCheckPanelToggle(id);
+  });
+}
+
+function updateCheckPanelToggle(panelId){
+  const panel=document.getElementById(panelId);
+  const btn=panel?.querySelector('.check-panel-toggle');
+  if(!panel||!btn)return;
+  btn.textContent=panel.classList.contains('is-open')?'收起':'展开';
+}
+
+function closeAllCheckPanels(event){
+  if(event&&event.target&&event.target.closest&&event.target.closest('.check-panel'))return;
+  ['targetAppPanel','targetAppVersionPanel','targetRegionPanel'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.classList.remove('is-open');
+    updateCheckPanelToggle(id);
+  });
+}
+document.addEventListener('click',closeAllCheckPanels);
+
+function updateCheckPanelSummary(panelId){
+  const summary=document.getElementById(panelId+'Summary');
+  if(!summary)return;
+  const boxes=[...document.querySelectorAll('#'+panelId+' .check-panel-body input[type="checkbox"]')];
+  const checked=boxes.filter(b=>b.checked).length;
+  const total=boxes.length;
+  summary.textContent=total?(checked===total?`已全选（${total}）`:`已选 ${checked}/${total}`):'';
+}
+
+function toggleCheckPanelAll(panelId,checked){
+  document.querySelectorAll('#'+panelId+' .check-panel-body input[type="checkbox"]').forEach(el=>{el.checked=!!checked});
+  refreshCheckPanelAll(panelId);
+}
+
+function refreshCheckPanelAll(panelId){
+  const boxes=[...document.querySelectorAll('#'+panelId+' .check-panel-body input[type="checkbox"]')];
+  const all=document.querySelector('#'+panelId+' .check-panel-all');
+  if(all){
+    all.checked=boxes.length>0&&boxes.every(b=>b.checked);
+    all.indeterminate=boxes.some(b=>b.checked)&&!all.checked;
+  }
+  updateCheckPanelSummary(panelId);
+}
+
+function getCheckedValues(panelId){
+  return [...document.querySelectorAll('#'+panelId+' .check-panel-body input[type="checkbox"]:checked')].map(el=>el.value);
+}
+
+function showPage(p){
+  if(listPage) listPage.classList.toggle('hidden',p!=='list');
+  if(editorPage) editorPage.classList.toggle('hidden',p!=='editor');
+  if(templatesPage) templatesPage.classList.toggle('hidden',p!=='templates');
+  if(templateEditorPage) templateEditorPage.classList.toggle('hidden',p!=='templateEditor');
+  const metaTag=document.getElementById('metaTag');
+  if(metaTag){
+    metaTag.textContent=p==='list'?'公告列表':p==='templates'?'公告模板':p==='templateEditor'?'模板编辑':'公告编辑';
+  }
+  if(p==='templates') renderTemplates();
+  if(modalMask&&p!=='editor'&&p!=='templateEditor'){
+    modalMask.classList.add('hidden');
+    paramManagerOpen=false;
+    paramEditIndex=null;
+  }
+  if(p==='editor') paramSource='notice';
+  if(p==='templateEditor') paramSource='template';
+  if(p==='list') applyNoticeFilters(false);
+  scrollTo(0,0)
+}
+function loadInputs(){
+  if(!copy[lang]) copy[lang]={title:'',body:'',popup:''};
+  titleInput.value=copy[lang].title||'';
+  bodyInput.value=copy[lang].body||'';
+  if(popupInput) popupInput.value=copy[lang].popup||'';
+  syncDisplayFormatUI(false);
+}
+function resetEditor(){
+  copy=emptyCopy();
+  enablePopupDisplay=false;
+  const nowInput=fmtInput(new Date(),baseTz);
+  const endDefault=addMinutesToInput(nowInput,60);
+  noticeParams=ensureFixedParams([
+    {name:'start_time',desc:'开始时间',type:'time',precision:'datetime',value:nowInput},
+    {name:'end_time',desc:'结束时间',type:'time',precision:'datetime',value:endDefault}
+  ]);
+  baseTz=BASE_TZ;
+  if(eventStartTime) eventStartTime.value=nowInput;
+  if(eventEndTime) eventEndTime.value=endDefault;
+  if(publishMode) publishMode.value='immediate';
+  if(validityType) validityType.value='limited';
+  if(repeatRule) repeatRule.value='none';
+  if(popupRepeatRule) popupRepeatRule.value='none';
+  const nowPlus=addMinutesToInput(nowInput,60);
+  if(popupRangeStart) popupRangeStart.value=nowInput;
+  if(popupRangeEnd) popupRangeEnd.value=nowPlus;
+  if(popupOnceStart) popupOnceStart.value=nowInput;
+  if(popupOnceEnd) popupOnceEnd.value=nowPlus;
+  if(popupDailyStart) popupDailyStart.value='09:00';
+  if(popupDailyEnd) popupDailyEnd.value='18:00';
+  fillTemplateSelect();
+  if(editorTplSelect) editorTplSelect.value='';
+  if(enablePopupCheck) enablePopupCheck.checked=false;
+  previewMode='body';
+  contentEditMode='body';
+  enablePopupDisplay=false;
+  syncPopupReminderUI(false);
+  initTargetCheckPanels();
+  onPublishConfigChange();
+}
+function openCreate(){
+  try{
+    editing=false;editingPublished=false;editingNoticeId=null;
+    paramManagerOpen=false;
+    paramEditIndex=null;
+    paramSource='notice';
+    if(modalMask) modalMask.classList.add('hidden');
+    editorTitle.textContent='新增公告';
+    resetEditor();
+    lang=DEFAULT_LANG;
+    loadInputs();
+    renderNoticeParams();
+    onPublishConfigChange();
+    showPage('editor');
+    setLang(DEFAULT_LANG);
+  }catch(err){
+    console.error(err);
+    alert('打开新增公告失败：'+(err&&err.message?err.message:err));
+  }
+}
+function openEdit(button){
+  const n=getNoticeFromButton(button);
+  if(!n)return;
+  if(n.status!=='待发布'&&n.status!=='展示中'){
+    showToast('终态公告不支持编辑');
+    return;
+  }
+  editorTitle.textContent='编辑公告';
+  resetEditor();
+  editing=true;
+  editingNoticeId=n.noticeId;
+  editingPublished=n.status==='展示中';
+  if(n.project) targetProject.value=n.project;
+  publishMode.value=(n.publishMode.includes('即时')||n.publishMode.includes('立即'))?'immediate':'scheduled';
+  copy=ensureCopy(templates[0].copy);
+  LANGS.forEach(({code})=>{
+    if(!copy[code]) copy[code]={title:'',body:'',popup:''};
+    copy[code].title=n.name;
+  });
+  noticeParams=ensureFixedParams(defaultParams);
+  lang=DEFAULT_LANG;
+  loadInputs();
+  renderNoticeParams();
+  onPublishConfigChange();
+  const toInput=v=>{
+    if(!v||v==='长期有效'||v==='下次发布前') return '';
+    const m=String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+    if(!m) return '';
+    return m[4]?`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}`:`${m[1]}-${m[2]}-${m[3]}T00:00`;
+  };
+  const startVal=toInput(n.publishTime);
+  const endVal=toInput(n.expireTime);
+  if(startVal&&eventStartTime) eventStartTime.value=startVal;
+  if(endVal&&eventEndTime) eventEndTime.value=endVal;
+  if(n.expireTime==='长期有效'&&validityType){
+    validityType.value='permanent';
+  }else if(validityType){
+    validityType.value='limited';
+  }
+  onPublishConfigChange();
+  const rule=n.cycleId?cycleRules[n.cycleId]:null;
+  if(repeatRule&&rule?.repeatType){
+    refreshRepeatOptions(false);
+    if([...repeatRule.options].some(o=>o.value===rule.repeatType)) repeatRule.value=rule.repeatType;
+  }
+  restorePopupFieldsFromNotice(n);
+  showPage('editor');
+  setLang(DEFAULT_LANG);
+  showToast(editingPublished?'编辑后保存将实时生效':'进入编辑，保存后更新公告');
+}
+function setLang(v){
+  saveCopy();
+  lang=v||DEFAULT_LANG;
+  loadInputs();
+  document.querySelectorAll('#editorLangTabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.lang===lang));
+  renderPreview()
+}
+function saveCopy(){
+  if(!titleInput||!copy[lang])return;
+  copy[lang].title=titleInput.value;
+  copy[lang].body=bodyInput.value;
+  if(popupInput) copy[lang].popup=popupInput.value;
+  enablePopupDisplay=!!(enablePopupCheck?.checked);
+}
+document.querySelectorAll('#editorLangTabs .tab').forEach(t=>t.onclick=()=>setLang(t.dataset.lang));
+['titleInput','bodyInput','popupInput'].forEach(id=>{const el=document.getElementById(id);if(el)el.oninput=()=>{saveCopy();renderPreview()}});
+function renderLangSwitchers(){
+  const editorTabs=document.getElementById('editorLangTabs');
+  if(editorTabs){
+    editorTabs.innerHTML=buildLangTabsHtml(lang||DEFAULT_LANG,'data-lang');
+    editorTabs.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setLang(t.dataset.lang));
+  }
+  const templateTabs=document.getElementById('templateLangTabs');
+  if(templateTabs){
+    templateTabs.innerHTML=buildLangTabsHtml(templateLang||DEFAULT_LANG,'data-template-lang','template-tab');
+    templateTabs.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setTemplateLanguage(t.dataset.templateLang));
+  }
+  const templatePreviewLangEl=document.getElementById('templatePreviewLang');
+  if(templatePreviewLangEl) templatePreviewLangEl.innerHTML=buildLangOptionsHtml(templateLang||DEFAULT_LANG);
+}
+function insertToken(t,target='body'){
+  const el=target==='popup'?popupInput:bodyInput;
+  if(!el)return;
+  const s=el.selectionStart,e=el.selectionEnd;
+  el.value=el.value.slice(0,s)+t+el.value.slice(e);
+  el.focus();
+  const pos=s+t.length;
+  el.setSelectionRange(pos,pos);
+  saveCopy();renderPreview();
+}
+function onPopupReminderChange(fromUser=true){
+  enablePopupDisplay=!!(enablePopupCheck?.checked);
+  if(!enablePopupDisplay){
+    contentEditMode='body';
+    if(previewMode==='popup') previewMode='body';
+  }
+  syncPopupReminderUI(fromUser);
+  fillTemplateSelect();
+  if(fromUser){
+    const sel=document.getElementById('editorTplSelect');
+    if(sel?.value){
+      const t=templates.find(x=>String(x.id)===String(sel.value));
+      if(t&&!!t.enablePopup!==!!enablePopupDisplay){
+        sel.value='';
+        showToast(enablePopupDisplay?'已勾选弹窗提醒，请改选含弹窗的模板':'已取消弹窗提醒，请改选不含弹窗的模板');
+      }
+    }
+  }
+}
+function onDisplayFormatChange(fromUser=true){
+  // 兼容旧调用
+  onPopupReminderChange(fromUser);
+}
+function setContentEditMode(mode){
+  // 平铺编辑，不再切换 Tab
+  contentEditMode='body';
+  syncPopupReminderUI(false);
+}
+function syncContentEditModeUI(){
+  syncPopupReminderUI(false);
+}
+function syncPopupReminderUI(fromUser=true){
+  if(enablePopupCheck) enablePopupCheck.checked=!!enablePopupDisplay;
+  const popupPanel=document.getElementById('popupConfigPanel');
+  if(popupPanel) popupPanel.classList.toggle('hidden',!enablePopupDisplay);
+  syncPopupValidityUI();
+  syncPreviewModeUI();
+  if(fromUser){saveCopy();renderPreview()}
+}
+function syncDisplayFormatUI(fromUser=true){
+  syncPopupReminderUI(fromUser);
+}
+function togglePopupContent(fromUser=true){
+  onPopupReminderChange(fromUser);
+}
+function setPreviewMode(mode){
+  if(mode==='popup'&&!enablePopupDisplay){
+    showToast('请先勾选「弹窗提醒」');
+    return;
+  }
+  previewMode=mode==='popup'?'popup':'body';
+  syncPreviewModeUI();
+  renderPreview();
+}
+function syncPreviewModeUI(){
+  const bodyBtn=document.getElementById('previewModeBodyBtn');
+  const popupBtn=document.getElementById('previewModePopupBtn');
+  if(!enablePopupDisplay&&previewMode==='popup') previewMode='body';
+  if(popupBtn){
+    popupBtn.disabled=!enablePopupDisplay;
+    popupBtn.title=enablePopupDisplay?'切换到弹窗预览':'请先勾选「弹窗提醒」';
+  }
+  if(bodyBtn) bodyBtn.classList.toggle('active',previewMode==='body');
+  if(popupBtn) popupBtn.classList.toggle('active',previewMode==='popup');
+  if(previewBodyView) previewBodyView.classList.toggle('hidden',previewMode==='popup');
+  if(previewPopupView) previewPopupView.classList.toggle('hidden',previewMode!=='popup');
+}
+/** 将录入值规范为可解析的 datetime 串（基准时区语义） */
+function normalizeDateTimeInput(v){
+  if(v==null||v==='') return '';
+  let s=String(v).trim().replace(' ','T');
+  if(/^\d{2}:\d{2}(:\d{2})?$/.test(s)){
+    const anchor=(typeof eventStartTime!=='undefined'&&eventStartTime?.value
+      ?eventStartTime.value
+      :fmtInput(new Date(),baseTz)
+    ).split('T')[0];
+    return `${anchor}T${s.slice(0,5)}`;
+  }
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T00:00`;
+  if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) return s.slice(0,16);
+  return s;
+}
+/** 把「基准时区下的墙钟时间」解析为绝对时刻 */
+function parse(v,tz){
+  const raw=normalizeDateTimeInput(v);
+  if(!raw||!raw.includes('T')) return new Date(NaN);
+  const zone=tz||baseTz;
+  let [d,tm]=raw.split('T');
+  let [y,m,day]=d.split('-').map(Number);
+  let [h,min]=tm.split(':').map(Number);
+  let p=new Date(Date.UTC(y,m-1,day,h,min));
+  let parts=new Intl.DateTimeFormat('en-US',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(p);
+  let o={};parts.forEach(x=>o[x.type]=x.value);
+  let hour=o.hour==='24'?'00':o.hour;
+  let a=Date.UTC(+o.year,+o.month-1,+o.day,+hour,+o.minute,+o.second);
+  let want=Date.UTC(y,m-1,day,h,min);
+  return new Date(p.getTime()+want-a);
+}
+/** 预览/表单等统一：yyyy-mm-dd HH:mm（按目标时区） */
+function fmt(d,tz){
+  if(!(d instanceof Date)||Number.isNaN(d.getTime())) return '--';
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:tz||baseTz,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(d);
+  const o={};parts.forEach(x=>o[x.type]=x.value);
+  const hour=o.hour==='24'?'00':o.hour;
+  return `${o.year}-${o.month}-${o.day} ${hour}:${o.minute}`;
+}
+function fmtInput(d,tz){
+  const s=fmt(d,tz);
+  return s==='--'? '':s.replace(' ','T');
+}
+/** 仅列表展示：dd-mm-yyyy[ HH:mm] */
+function formatListDisplayTime(v){
+  if(!v||v==='—'||v==='长期有效'||v==='下次发布前') return v||'—';
+  const m=String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+  if(!m) return v;
+  const ddmmyyyy=`${m[3]}-${m[2]}-${m[1]}`;
+  return m[4]?`${ddmmyyyy} ${m[4]}:${m[5]}`:ddmmyyyy;
+}
+function resolveParams(text,tz){
+  syncCoreTimesFromConfig();
+  syncImmediatePublishTime();
+  const displayTz=tz||previewTz||baseTz;
+  let out=text||'';
+  noticeParams.forEach(p=>{
+    out=out.replaceAll(paramToken(p.name),formatParamDisplay(p,displayTz));
+  });
+  return out;
+}
+function paramPrecisionLabel(precision){
+  return {date:'日期',datetime:'日期时间',time:'时间'}[precision]||'日期时间';
+}
+function paramTypeLabel(type,precision){
+  if(type==='fixed') return '固定参数';
+  const t={time:'时间',time_range:'时间区间',date_range:'时间区间'}[type]||'时间';
+  return precision?`${t} · ${paramPrecisionLabel(precision)}`:t;
+}
+function normalizeParam(p){
+  if(!p)return p;
+  if(isFixedParam(p)){
+    const fixed=FIXED_PARAMS.find(f=>f.name===p.name)||p;
+    const out={...fixed,type:'fixed'};
+    if(out.name==='timezone') out.value=BASE_TZ_LABEL;
+    return out;
+  }
+  const out={...p};
+  if(out.type==='date_range'){
+    out.type='time_range';
+    out.precision=out.precision||'date';
+  }
+  if(out.type!=='time'&&out.type!=='time_range') out.type='time';
+  if(!['date','datetime','time'].includes(out.precision)) out.precision='datetime';
+  return out;
+}
+function paramInputType(precision){
+  return {date:'date',datetime:'datetime-local',time:'time'}[precision]||'datetime-local';
+}
+function formatParamValueText(v,precision){
+  if(!v)return '—';
+  if(precision==='time') return String(v).slice(0,5);
+  if(precision==='date') return String(v);
+  return String(v).replace('T',' ');
+}
+function formatParamDisplay(p,tz=baseTz){
+  if(!p)return '--';
+  const np=normalizeParam(p);
+  const displayTz=tz||previewTz||baseTz;
+  if(np.type==='fixed'){
+    if(np.name==='timezone') return previewTzLabel(displayTz)||np.value||'--';
+    return np.value||'--';
+  }
+  const precision=np.precision;
+  const toPreview=(val,mode)=>{
+    if(!val) return '--';
+    const abs=parse(val,baseTz);
+    if(Number.isNaN(abs.getTime())) return formatParamValueText(val,mode).replace('—','--');
+    const full=fmt(abs,displayTz);
+    if(mode==='date') return full.slice(0,10);
+    if(mode==='time') return full.slice(11,16);
+    return full;
+  };
+  if(np.type==='time_range'){
+    return `${toPreview(np.start,precision)} ~ ${toPreview(np.end,precision)}`;
+  }
+  return toPreview(np.value,precision);
+}
+function formatParamTableValue(p){
+  if(!p)return '—';
+  const np=normalizeParam(p);
+  if(np.type==='fixed'){
+    if(np.name==='timezone') return np.value||BASE_TZ_LABEL;
+    return '系统自动填充';
+  }
+  if(np.type==='time_range'){
+    return `${formatParamValueText(np.start,np.precision)} ~ ${formatParamValueText(np.end,np.precision)}`;
+  }
+  return formatParamValueText(np.value,np.precision);
+}
+function syncImmediatePublishTime(){
+  // 即时发布：发布时间跟随当前时刻（界面不展示）
+  if(publishMode?.value!=='immediate')return;
+  if(eventStartTime) eventStartTime.value=fmtInput(new Date(),baseTz);
+}
+function isLongTermValidity(){
+  return (validityType?.value||'')==='permanent';
+}
+function durationToMinutes(value,unit){
+  const n=Math.max(1,Number(value)||1);
+  if(unit==='day') return n*24*60;
+  if(unit==='hour') return n*60;
+  return n;
+}
+function addMinutesToInput(startInput,minutes){
+  const start=parse(startInput,baseTz);
+  return fmtInput(new Date(start.getTime()+minutes*60000),baseTz);
+}
+function calcStatus(){
+  const mode=publishMode?.value||'immediate';
+  if(mode==='immediate') syncImmediatePublishTime();
+  syncCoreTimesFromConfig();
+  if(!eventStartTime?.value) return mode==='immediate'?'展示中':'待发布';
+  if(isLongTermValidity()){
+    const now=new Date(),start=parse(eventStartTime.value,baseTz);
+    return now<start?'待发布':'展示中';
+  }
+  if(!eventEndTime?.value) return mode==='immediate'?'展示中':'待发布';
+  const now=new Date(),start=parse(eventStartTime.value,baseTz),end=parse(eventEndTime.value,baseTz);
+  if(now<start)return '待发布';
+  if(now<end)return '展示中';
+  return '已归档';
+}
+function isLongTermValidity(){
+  return (validityType?.value||'')==='permanent';
+}
+function durationToMinutes(value,unit){
+  const n=Math.max(1,Number(value)||1);
+  if(unit==='day') return n*24*60;
+  if(unit==='hour') return n*60;
+  return n;
+}
+function addMinutesToInput(startInput,minutes){
+  const start=parse(startInput,baseTz);
+  return fmtInput(new Date(start.getTime()+minutes*60000),baseTz);
+}
+function calcStatus(){
+  const mode=publishMode?.value||'immediate';
+  const validity=validityType?.value||'limited';
+  if(mode==='immediate'&&validity!=='permanent') syncImmediatePublishTime();
+  syncCoreTimesFromConfig();
+  if(!eventStartTime?.value) return mode==='immediate'?'展示中':'待发布';
+  if(isLongTermValidity()){
+    const now=new Date(),start=parse(eventStartTime.value,baseTz);
+    return now<start?'待发布':'展示中';
+  }
+  if(!eventEndTime?.value) return mode==='immediate'?'展示中':'待发布';
+  const now=new Date(),start=parse(eventStartTime.value,baseTz),end=parse(eventEndTime.value,baseTz);
+  if(now<start)return '待发布';
+  if(now<end)return '展示中';
+  return '已归档';
+}
+function formatClock(v){
+  return (v||'--:--').slice(0,5);
+}
+function weekdayLabel(v){
+  return {0:'周日',1:'周一',2:'周二',3:'周三',4:'周四',5:'周五',6:'周六'}[Number(v)]||'未选择';
+}
+function addCalendarDays(dateStr,days){
+  const [y,m,d]=dateStr.split('-').map(Number);
+  const dt=new Date(Date.UTC(y,m-1,d));
+  dt.setUTCDate(dt.getUTCDate()+days);
+  const pad=n=>String(n).padStart(2,'0');
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth()+1)}-${pad(dt.getUTCDate())}`;
+}
+function getAnchorDateParts(){
+  const raw=eventStartTime?.value||fmtInput(new Date(),baseTz);
+  const d=parse(raw.includes('T')?raw:`${raw}T12:00`,baseTz);
+  const parts=new Intl.DateTimeFormat('en-US',{timeZone:baseTz,year:'numeric',month:'numeric',day:'numeric',weekday:'short'}).formatToParts(d);
+  const o={};parts.forEach(x=>o[x.type]=x.value);
+  const weekday={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[o.weekday]??1;
+  const day=Number(o.day);
+  const month=Number(o.month);
+  const year=Number(o.year);
+  const nth=Math.ceil(day/7);
+  const nextWeek=new Date(d.getTime()+7*24*60*60*1000);
+  const nextParts=new Intl.DateTimeFormat('en-US',{timeZone:baseTz,month:'numeric'}).formatToParts(nextWeek);
+  const nextMonth=Number(nextParts.find(x=>x.type==='month')?.value||month);
+  const isLast=nextMonth!==month;
+  return {weekday,day,month,year,nth,isLast,raw};
+}
+function buildRepeatOptions(){
+  const {weekday,day,nth,isLast}=getAnchorDateParts();
+  const wd=weekdayLabel(weekday); // 周二
+  const nthLabel=isLast?'最后一个':({1:'第一个',2:'第二个',3:'第三个',4:'第四个',5:'第五个'}[nth]||`第${nth}个`);
+  const wdChar=['日','一','二','三','四','五','六'][weekday];
+  return [
+    {value:'none',label:'不重复'},
+    {value:'daily',label:'每天'},
+    {value:'weekly',label:`每周${wdChar}`},
+    {value:'monthly_nth',label:`每月${nthLabel}${wd}`},
+    {value:'monthly_day',label:`每月${day}日`},
+    {value:'weekdays',label:'每个工作日（周一至周五）'}
+  ];
+}
+function refreshRepeatOptions(preserve){
+  const sel=document.getElementById('repeatRule')||repeatRule;
+  if(!sel)return;
+  const prev=preserve?sel.value:'none';
+  const opts=buildRepeatOptions();
+  sel.innerHTML=opts.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  sel.value=opts.some(o=>o.value===prev)?prev:'none';
+}
+function syncCoreTimesFromConfig(){
+  const validity=validityType?.value||'limited';
+  if(validity==='permanent'){
+    if(eventEndTime) eventEndTime.value='2099-12-31T23:59';
+  }
+}
+function onPublishConfigChange(){
+  const mode=publishMode?.value||'immediate';
+  const validity=validityType?.value||'limited';
+  const isPermanent=validity==='permanent';
+  const isScheduled=mode==='scheduled';
+
+  // 即时发布：不展示发布时间；定时发布：展示发布时间
+  if(scheduleStartField) scheduleStartField.classList.toggle('hidden',!isScheduled);
+  // 有期限：展示过期时间；长期有效：不展示过期时间
+  if(expireTimeField) expireTimeField.classList.toggle('hidden',isPermanent);
+  // 长期有效：同排展示循环方式；有期限：隐藏并固定不重复
+  if(repeatRuleField) repeatRuleField.classList.toggle('hidden',!isPermanent);
+  if(!isPermanent&&repeatRule) repeatRule.value='none';
+
+  const startLabel=document.getElementById('startTimeLabel');
+  if(startLabel) startLabel.innerHTML='<span class="req">*</span>发布时间';
+
+  if(!eventStartTime?.value){
+    if(eventStartTime) eventStartTime.value=fmtInput(new Date(),baseTz);
+  }
+  // 即时发布：发布时间始终同步为当前（后台用，界面不展示）
+  if(mode==='immediate') syncImmediatePublishTime();
+  if(!isPermanent&&eventStartTime?.value&&eventEndTime&&!eventEndTime.value){
+    eventEndTime.value=addMinutesToInput(eventStartTime.value,60);
+  }
+
+  refreshRepeatOptions(true);
+  if(!isPermanent&&repeatRule) repeatRule.value='none';
+  syncCoreTimesFromConfig();
+  onPopupConfigChange();
+  renderNoticeParams();
+}
+function onPopupConfigChange(){
+  syncPopupValidityUI();
+}
+function getNoticeRepeatFamily(){
+  if((validityType?.value||'limited')!=='permanent') return 'none';
+  const rule=repeatRule?.value||'none';
+  if(rule==='none') return 'none';
+  if(rule==='daily'||rule==='weekdays') return 'daily';
+  if(rule==='weekly') return 'weekly';
+  if(rule==='monthly_day'||rule==='monthly_nth') return 'monthly';
+  return 'none';
+}
+function popupRepeatFamilyLabel(family){
+  return {none:'不循环',daily:'每日',weekly:'每周',monthly:'每月'}[family]||'不循环';
+}
+function ensureWeekdaySelects(){
+  const opts=['日','一','二','三','四','五','六'].map((c,i)=>`<option value="${i}">周${c}</option>`).join('');
+  ['popupWeeklyStartDay','popupWeeklyEndDay'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    if(!el.options.length) el.innerHTML=opts;
+  });
+}
+function ensureMonthDaySelects(){
+  let opts='';
+  for(let i=1;i<=31;i++) opts+=`<option value="${i}">${i}</option>`;
+  ['popupMonthlyStartDay','popupMonthlyEndDay'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const prev=el.value||el.dataset.pref||'';
+    if(!el.options.length) el.innerHTML=opts;
+    if(prev) el.value=prev;
+  });
+}
+function syncPopupValidityUI(){
+  const row=document.getElementById('popupSettingsRow');
+  if(!row)return;
+  const show=!!enablePopupDisplay;
+  row.classList.toggle('hidden',!show);
+  if(!show) return;
+
+  const noticeLimited=(validityType?.value||'limited')==='limited';
+  const limitedBlock=document.getElementById('popupLimitedBlock');
+  const permanentBlock=document.getElementById('popupPermanentBlock');
+  if(limitedBlock) limitedBlock.classList.toggle('hidden',!noticeLimited);
+  if(permanentBlock) permanentBlock.classList.toggle('hidden',noticeLimited);
+
+  if(noticeLimited){
+    const ns=eventStartTime?.value||'';
+    const ne=eventEndTime?.value||'';
+    if(popupRangeStart&&!popupRangeStart.value&&ns) popupRangeStart.value=ns;
+    if(popupRangeEnd&&!popupRangeEnd.value&&ne) popupRangeEnd.value=ne;
+    return;
+  }
+
+  ensureWeekdaySelects();
+  ensureMonthDaySelects();
+  const family=getNoticeRepeatFamily();
+  const locked=family!=='none';
+  const repeatSel=document.getElementById('popupRepeatRule');
+  const lockedText=document.getElementById('popupRepeatLockedText');
+  if(repeatSel) repeatSel.classList.toggle('hidden',locked);
+  if(lockedText) lockedText.classList.toggle('hidden',!locked);
+  if(locked){
+    if(repeatSel) repeatSel.value=family;
+    if(lockedText) lockedText.textContent=`与公告一致：${popupRepeatFamilyLabel(family)}`;
+  }else if(repeatSel&&!repeatSel.value){
+    repeatSel.value='none';
+  }
+  syncPopupWindowFields();
+}
+function onPopupRepeatChange(){
+  syncPopupWindowFields();
+}
+function getEffectivePopupRepeat(){
+  const family=getNoticeRepeatFamily();
+  if(family!=='none') return family;
+  const sel=document.getElementById('popupRepeatRule');
+  return sel?.value||'none';
+}
+function syncPopupWindowFields(){
+  ensureWeekdaySelects();
+  ensureMonthDaySelects();
+  const mode=getEffectivePopupRepeat();
+  const field=document.getElementById('popupWindowField');
+  if(field) field.dataset.active=mode;
+
+  const parts=getAnchorDateParts();
+  const startWd=document.getElementById('popupWeeklyStartDay');
+  const endWd=document.getElementById('popupWeeklyEndDay');
+  if(startWd&&!startWd.dataset.inited){startWd.value=String(parts.weekday);startWd.dataset.inited='1';}
+  if(endWd&&!endWd.dataset.inited){endWd.value=String(parts.weekday);endWd.dataset.inited='1';}
+  const mdStart=document.getElementById('popupMonthlyStartDay');
+  const mdEnd=document.getElementById('popupMonthlyEndDay');
+  if(mdStart&&!mdStart.dataset.inited){mdStart.value=String(parts.day);mdStart.dataset.inited='1';}
+  if(mdEnd&&!mdEnd.dataset.inited){mdEnd.value=String(Math.min(31,parts.day+6));mdEnd.dataset.inited='1';}
+  const onceStart=document.getElementById('popupOnceStart');
+  const onceEnd=document.getElementById('popupOnceEnd');
+  if(onceStart&&!onceStart.value&&eventStartTime?.value) onceStart.value=eventStartTime.value;
+  if(onceEnd&&!onceEnd.value&&eventStartTime?.value) onceEnd.value=addMinutesToInput(eventStartTime.value,60);
+}
+function validatePopupValidity(){
+  const noticeLimited=(validityType?.value||'limited')==='limited';
+  if(noticeLimited){
+    const ps=document.getElementById('popupRangeStart')?.value;
+    const pe=document.getElementById('popupRangeEnd')?.value;
+    if(!ps||!pe) return '请填写弹窗有效期起止时间';
+    const pStart=parse(ps,baseTz),pEnd=parse(pe,baseTz);
+    if(pEnd<=pStart) return '弹窗结束时间必须晚于开始时间';
+    const ns=eventStartTime?.value,ne=eventEndTime?.value;
+    if(ns&&ne){
+      const nStart=parse(ns,baseTz),nEnd=parse(ne,baseTz);
+      if(pStart<nStart||pEnd>nEnd) return '弹窗有效期须在公告有效期内';
+    }
+    return '';
+  }
+  const mode=getEffectivePopupRepeat();
+  if(mode==='none'){
+    const ps=document.getElementById('popupOnceStart')?.value;
+    const pe=document.getElementById('popupOnceEnd')?.value;
+    if(!ps||!pe) return '请填写弹窗展示窗口起止时间';
+    if(parse(pe,baseTz)<=parse(ps,baseTz)) return '弹窗结束时间必须晚于开始时间';
+    return '';
+  }
+  if(mode==='daily'){
+    const a=document.getElementById('popupDailyStart')?.value;
+    const b=document.getElementById('popupDailyEnd')?.value;
+    if(!a||!b) return '请填写每日弹窗时段';
+    if(a===b) return '每日弹窗结束时间不能与开始时间相同';
+    return '';
+  }
+  if(mode==='weekly'){
+    const sd=document.getElementById('popupWeeklyStartDay')?.value;
+    const st=document.getElementById('popupWeeklyStartTime')?.value;
+    const ed=document.getElementById('popupWeeklyEndDay')?.value;
+    const et=document.getElementById('popupWeeklyEndTime')?.value;
+    if(sd===''||ed===''||!st||!et) return '请完整填写每周弹窗窗口';
+    if(sd===ed&&st===et) return '每周弹窗起止不能完全相同';
+    return '';
+  }
+  if(mode==='monthly'){
+    const sd=Number(document.getElementById('popupMonthlyStartDay')?.value);
+    const st=document.getElementById('popupMonthlyStartTime')?.value;
+    const ed=Number(document.getElementById('popupMonthlyEndDay')?.value);
+    const et=document.getElementById('popupMonthlyEndTime')?.value;
+    if(!sd||!ed||!st||!et) return '请完整填写每月弹窗窗口';
+    if(sd<1||sd>31||ed<1||ed>31) return '每月日期须在 1–31 之间';
+    if(sd===ed&&st===et) return '每月弹窗起止不能完全相同';
+    return '';
+  }
+  return '';
+}
+function recurrenceSummary(){
+  const rule=repeatRule?.value||'none';
+  if(rule==='none')return '';
+  const label=repeatRule?.selectedOptions?.[0]?.textContent||'循环';
+  const st=formatClock((eventStartTime?.value||'').split('T')[1]||'');
+  const validity=validityType?.value;
+  const dur=validity==='permanent'?'长期有效':(fmtListTime(eventEndTime?.value)||'');
+  return `${label} ${st}${dur?' · '+dur:''}`;
+}
+function repeatSummaryShort(){
+  const rule=repeatRule?.value||'none';
+  if(rule==='none')return '';
+  return repeatRule?.selectedOptions?.[0]?.textContent||'循环';
+}
+/** 从编辑器汇总弹窗循环规则文案（列表展示用） */
+function buildPopupCycleSummary(){
+  if(!enablePopupDisplay) return '';
+  const noticeLimited=(validityType?.value||'limited')==='limited';
+  if(noticeLimited) return '不循环';
+  const mode=getEffectivePopupRepeat();
+  if(mode==='none') return '不循环';
+  if(mode==='daily'){
+    const a=document.getElementById('popupDailyStart')?.value||'';
+    const b=document.getElementById('popupDailyEnd')?.value||'';
+    return a&&b?`每日 ${a}–${b}`:'每日';
+  }
+  if(mode==='weekly'){
+    const wd=['日','一','二','三','四','五','六'];
+    const sd=document.getElementById('popupWeeklyStartDay')?.value;
+    const ed=document.getElementById('popupWeeklyEndDay')?.value;
+    const st=document.getElementById('popupWeeklyStartTime')?.value||'';
+    const et=document.getElementById('popupWeeklyEndTime')?.value||'';
+    if(sd===''||ed===''||sd==null||ed==null) return '每周';
+    return `每周${wd[Number(sd)]} ${st}–周${wd[Number(ed)]} ${et}`;
+  }
+  if(mode==='monthly'){
+    const sd=document.getElementById('popupMonthlyStartDay')?.value;
+    const ed=document.getElementById('popupMonthlyEndDay')?.value;
+    const st=document.getElementById('popupMonthlyStartTime')?.value||'';
+    const et=document.getElementById('popupMonthlyEndTime')?.value||'';
+    if(!sd||!ed) return '每月';
+    return `每月${sd}日 ${st}–${ed}日 ${et}`;
+  }
+  return '不循环';
+}
+function applyPopupFieldsToNotice(n){
+  if(!n)return;
+  n.enablePopup=!!enablePopupDisplay;
+  n.popupCycleSummary=n.enablePopup?buildPopupCycleSummary():'';
+}
+function restorePopupFieldsFromNotice(n){
+  enablePopupDisplay=!!n?.enablePopup;
+  if(enablePopupCheck) enablePopupCheck.checked=enablePopupDisplay;
+  onPopupReminderChange(false);
+  onPublishConfigChange();
+  const summary=n?.popupCycleSummary||'';
+  const family=summary.startsWith('每日')?'daily'
+    :summary.startsWith('每周')?'weekly'
+    :summary.startsWith('每月')?'monthly'
+    :'none';
+  if(getNoticeRepeatFamily()==='none'&&popupRepeatRule){
+    popupRepeatRule.value=family;
+  }
+  syncPopupValidityUI();
+}
+function renderPreview(){
+  if(!previewTitle)return;
+  saveCopy();
+  const tz=previewTz||LOCAL_TZ||baseTz;
+  syncCoreTimesFromConfig();
+  syncPreviewModeUI();
+  const titleText=(resolveParams(copy[lang].title||'',tz)||'').trim();
+  const bodyText=(resolveParams(copy[lang].body||'',tz)||'').trim();
+  const popupText=(resolveParams(copy[lang].popup||'',tz)||'').trim();
+  previewTitle.textContent=titleText||'请填写公告标题';
+  previewTitle.style.display='';
+  previewTitle.classList.toggle('is-placeholder',!titleText);
+  previewBody.textContent=bodyText||'请输入公告正文';
+  previewBody.style.display='';
+  previewBody.classList.toggle('is-placeholder',!bodyText);
+  if(previewPopup){
+    previewPopup.textContent=popupText||'请填写弹窗展示内容';
+    previewPopup.style.display='';
+    previewPopup.classList.toggle('is-placeholder',!popupText);
+  }
+  if(previewPopupTitle){
+    previewPopupTitle.textContent=titleText||'请填写公告标题';
+    previewPopupTitle.style.display='';
+    previewPopupTitle.classList.toggle('is-placeholder',!titleText);
+  }
+}
+function onCoreTimeChange(el){
+  if(editingPublished&&!confirm('正在修改已发布公告的发布或过期时间。确认继续并重新计算公告状态吗？')){
+    el.value=el.dataset.previous||el.value;
+    renderPreview();return;
+  }
+  if(el===eventStartTime||el?.id==='eventStartTime') refreshRepeatOptions(true);
+  syncCoreTimesFromConfig();
+  syncPopupValidityUI();
+  renderNoticeParams();
+  renderPreview();
+}
+function validateNotice(){
+  if(!targetProject.value)return '请选择投放项目';
+  if(!getCheckedValues('targetAppPanel').length)return '请选择投放 APP';
+  if(!getCheckedValues('targetAppVersionPanel').length)return '请选择 APP 版本';
+  if(!getCheckedValues('targetRegionPanel').length)return '请选择地区';
+  const mode=publishMode.value;
+  const validity=validityType?.value||'';
+  if(mode==='immediate') syncImmediatePublishTime();
+  else if(!eventStartTime?.value) return '请填写发布时间';
+  if(validity==='limited'){
+    if(!eventEndTime?.value)return '请填写过期时间';
+    const start=parse(eventStartTime.value,baseTz),end=parse(eventEndTime.value,baseTz);
+    if(end<=start)return '过期时间必须晚于发布时间';
+  }
+  if(validity==='permanent'&&!(repeatRule?.value)) return '请选择循环方式';
+  const missingTitle=findMissingLang(copy,['title']);
+  if(missingTitle){setLang(missingTitle.code);return '请完善 '+missingTitle.name+' 的公告标题';}
+  const missingBody=findMissingLang(copy,['body']);
+  if(missingBody){setLang(missingBody.code);return '请完善 '+missingBody.name+' 的公告正文';}
+  if(enablePopupDisplay){
+    const missing=findMissingLang(copy,['popup']);
+    if(missing){setLang(missing.code);return '已勾选弹窗提醒，请完善 '+missing.name+' 的弹窗展示内容';}
+    const popupErr=validatePopupValidity();
+    if(popupErr) return popupErr;
+  }
+  return '';
+}
+function fmtListTime(v){
+  if(!v) return '—';
+  return v.replace('T',' ');
+}
+function buildNoticeFromEditor(title){
+  if(publishMode.value==='immediate') syncImmediatePublishTime();
+  syncCoreTimesFromConfig();
+  const mode=publishMode.value==='immediate'?'即时发布':'定时发布';
+  const validity=validityType?.value||'';
+  const repeat=validity==='permanent'?(repeatRule?.value||'none'):'none';
+  const status=calcStatus();
+  const publishTime=fmtListTime(eventStartTime?.value)||currentCreatedAt();
+  const expireTime=validity==='permanent'
+    ?'长期有效'
+    :(fmtListTime(eventEndTime?.value)||'—');
+  const baseId=nextBaseId();
+  const record={
+    noticeId:baseId,
+    baseId,
+    name:title,
+    project:targetProject.value,
+    publishMode:mode,
+    publishTime,
+    expireTime,
+    cycleId:'',
+    cycleSummary:'',
+    enablePopup:!!enablePopupDisplay,
+    popupCycleSummary:enablePopupDisplay?buildPopupCycleSummary():'',
+    status,
+    creator:'Admin',
+    createdAt:currentCreatedAt()
+  };
+  if(repeat!=='none'){
+    const summary=repeatSummaryShort()||'循环';
+    const detail=recurrenceSummary()+' '+BASE_TZ_LABEL;
+    cycleRules[baseId]={
+      summary,
+      detail,
+      duration:validity==='permanent'?'长期有效':'有期限',
+      repeatType:repeat,
+      terminated:false,
+      creator:'Admin',
+      createdAt:record.createdAt
+    };
+    record.cycleId=baseId;
+    record.cycleSummary=summary;
+  }
+  return record;
+}
+function saveNotice(){
+  saveCopy();
+  const error=validateNotice();if(error){alert(error);return}
+  let title=primaryCopyTitle(copy);if(!title){alert('请填写公告标题');return}
+  const usesTime=Object.values(copy).some(c=>/\$\{[a-zA-Z0-9_]+\}/.test(c.body));
+  if(!usesTime&&!confirm('多语言正文中未引用任何参数，确认继续保存吗？'))return;
+  if(editing&&editingNoticeId){
+    const exist=getNoticeById(editingNoticeId);
+    if(exist){
+      syncCoreTimesFromConfig();
+      const validity=validityType?.value||'';
+      exist.name=title;
+      exist.project=targetProject.value;
+      exist.publishTime=fmtListTime(eventStartTime?.value)||exist.publishTime;
+      exist.expireTime=validity==='permanent'
+        ?'长期有效'
+        :(fmtListTime(eventEndTime?.value)||exist.expireTime);
+      exist.publishMode=publishMode.value==='immediate'?'即时发布':'定时发布';
+      applyPopupFieldsToNotice(exist);
+      const repeat=validity==='permanent'?(repeatRule?.value||'none'):'none';
+      const cycleKey=exist.baseId||exist.noticeId;
+      if(repeat==='none'){
+        if(exist.cycleId&&cycleRules[exist.cycleId]) delete cycleRules[exist.cycleId];
+        exist.cycleId='';
+        exist.cycleSummary='';
+      }else{
+        const summary=repeatSummaryShort()||'循环';
+        const detail=recurrenceSummary()+' '+BASE_TZ_LABEL;
+        if(exist.cycleId&&cycleRules[exist.cycleId]){
+          cycleRules[exist.cycleId].summary=summary;
+          cycleRules[exist.cycleId].detail=detail;
+          cycleRules[exist.cycleId].repeatType=repeat;
+          cycleRules[exist.cycleId].duration=validity==='permanent'?'长期有效':'有期限';
+          cycleRules[exist.cycleId].terminated=false;
+        }else{
+          cycleRules[cycleKey]={
+            summary,
+            detail,
+            duration:validity==='permanent'?'长期有效':'有期限',
+            repeatType:repeat,
+            terminated:false,
+            creator:exist.creator||'Admin',
+            createdAt:exist.createdAt||currentCreatedAt()
+          };
+          exist.cycleId=cycleKey;
+        }
+        exist.cycleSummary=summary;
+      }
+      if(exist.status==='待发布'||exist.status==='展示中'){
+        const nextStatus=calcStatus();
+        if(nextStatus==='待发布'||nextStatus==='展示中'||nextStatus==='已归档') exist.status=nextStatus;
+      }
+      editingNoticeId=null;
+      editing=false;
+      editingPublished=false;
+      showPage('list');
+      renderNoticeList(false);
+      showToast('公告已更新，修改已实时生效');
+      return;
+    }
+  }
+  if(!editing){
+    noticeRecords.push(buildNoticeFromEditor(title));
+  }
+  editingNoticeId=null;
+  editing=false;
+  editingPublished=false;
+  showPage('list');
+  renderNoticeList(false);
+  showToast((repeatRule?.value||'none')!=='none'
+    ?'循环公告已保存（公告ID不变，可随时修改循环方式）'
+    :'公告已保存，所有时间将以统一时间戳存储');
+}
+
+function getNoticeById(noticeId){
+  return noticeRecords.find(n=>n.noticeId===String(noticeId));
+}
+function getNoticeFromButton(button){
+  const row=button?.closest('tr');
+  return getNoticeById(row?.dataset?.id);
+}
+function sortNoticeRecords(list){
+  // 默认按创建时间倒序（最新创建在前）
+  return list.slice().sort((a,b)=>{
+    const ca=a.createdAt||'';
+    const cb=b.createdAt||'';
+    if(ca!==cb) return cb.localeCompare(ca);
+    return (b.noticeId||'').localeCompare(a.noticeId||'');
+  });
+}
+function matchNoticeFilters(n){
+  const keyword=(document.getElementById('noticeNameFilter')?.value||'').trim().toLowerCase();
+  const project=document.getElementById('projectFilter')?.value||'所属项目';
+  const mode=document.getElementById('publishModeFilter')?.value||'发布方式';
+  const status=document.getElementById('statusFilter')?.value||'公告状态';
+  const cycleStatus=document.getElementById('cycleStatusFilter')?.value||'循环状态';
+  const popup=document.getElementById('popupFilter')?.value||'有无弹窗';
+  const idKeyword=(document.getElementById('cycleIdFilter')?.value||'').trim().toLowerCase();
+  const publishFrom=document.getElementById('publishFrom')?.value||'';
+  const publishTo=document.getElementById('publishTo')?.value||'';
+  const createdFrom=document.getElementById('createdFrom')?.value||'';
+  const createdTo=document.getElementById('createdTo')?.value||'';
+  const pubDay=(n.publishTime||'').slice(0,10);
+  const createdDay=(n.createdAt||'').slice(0,10);
+  if(keyword&&!(n.name||'').toLowerCase().includes(keyword)) return false;
+  if(project!=='所属项目'&&n.project!==project) return false;
+  if(mode!=='发布方式'&&n.publishMode!==mode) return false;
+  if(status!=='公告状态'&&n.status!==status) return false;
+  if(cycleStatus!=='循环状态'&&getCycleStatus(n)!==cycleStatus) return false;
+  if(popup==='有弹窗'&&!n.enablePopup) return false;
+  if(popup==='无弹窗'&&!!n.enablePopup) return false;
+  if(idKeyword){
+    const nid=(n.noticeId||'').toLowerCase();
+    const bid=(n.baseId||n.cycleId||'').toLowerCase();
+    if(!nid.includes(idKeyword)&&!bid.includes(idKeyword)) return false;
+  }
+  if(publishFrom&&pubDay<publishFrom) return false;
+  if(publishTo&&pubDay>publishTo) return false;
+  if(createdFrom&&createdDay<createdFrom) return false;
+  if(createdTo&&createdDay>createdTo) return false;
+  return true;
+}
+function renderNoticePager(total,page,pageCount){
+  const pager=document.getElementById('noticePager');
+  if(!pager)return;
+  if(total===0){
+    pager.innerHTML='<div class="list-pager-info">共 0 条</div>';
+    return;
+  }
+  const start=(page-1)*NOTICE_PAGE_SIZE+1;
+  const end=Math.min(page*NOTICE_PAGE_SIZE,total);
+  let pages='';
+  const maxButtons=7;
+  let from=Math.max(1,page-Math.floor(maxButtons/2));
+  let to=Math.min(pageCount,from+maxButtons-1);
+  from=Math.max(1,to-maxButtons+1);
+  for(let i=from;i<=to;i++){
+    pages+=`<button type="button" class="pager-btn${i===page?' active':''}" onclick="goNoticePage(${i})">${i}</button>`;
+  }
+  pager.innerHTML=`
+    <div class="list-pager-info">共 ${total} 条，第 ${start}-${end} 条</div>
+    <button type="button" class="pager-btn" onclick="goNoticePage(${page-1})" ${page<=1?'disabled':''}>上一页</button>
+    ${pages}
+    <button type="button" class="pager-btn" onclick="goNoticePage(${page+1})" ${page>=pageCount?'disabled':''}>下一页</button>`;
+}
+function goNoticePage(page){
+  const list=sortNoticeRecords(noticeRecords.filter(matchNoticeFilters));
+  const pageCount=Math.max(1,Math.ceil(list.length/NOTICE_PAGE_SIZE));
+  noticePage=Math.min(Math.max(1,page),pageCount);
+  renderNoticeList(false);
+}
+function renderNoticeList(showResultToast,resetPage){
+  const publishFrom=document.getElementById('publishFrom')?.value||'';
+  const publishTo=document.getElementById('publishTo')?.value||'';
+  const createdFrom=document.getElementById('createdFrom')?.value||'';
+  const createdTo=document.getElementById('createdTo')?.value||'';
+  if(publishFrom&&publishTo&&publishFrom>publishTo){
+    if(showResultToast) showToast('发布开始日期不能晚于结束日期');
+    return;
+  }
+  if(createdFrom&&createdTo&&createdFrom>createdTo){
+    if(showResultToast) showToast('创建开始日期不能晚于结束日期');
+    return;
+  }
+  const rows=document.getElementById('noticeRows');
+  if(!rows)return;
+  if(resetPage) noticePage=1;
+  const list=sortNoticeRecords(noticeRecords.filter(matchNoticeFilters));
+  const pageCount=Math.max(1,Math.ceil(list.length/NOTICE_PAGE_SIZE)||1);
+  if(noticePage>pageCount) noticePage=pageCount;
+  if(noticePage<1) noticePage=1;
+  const start=(noticePage-1)*NOTICE_PAGE_SIZE;
+  const pageList=list.slice(start,start+NOTICE_PAGE_SIZE);
+  rows.innerHTML=pageList.length
+    ?pageList.map(n=>`<tr data-id="${n.noticeId}" data-status="${n.status}" data-base-id="${n.baseId||''}" data-cycle-id="${n.cycleId||''}">${buildNoticeRow(n)}</tr>`).join('')
+    :`<tr><td colspan="13" style="text-align:center;color:#94a3b8;padding:28px 12px">暂无公告数据</td></tr>`;
+  renderNoticePager(list.length,noticePage,pageCount);
+  if(showResultToast) showToast(list.length?`查询完成，共 ${list.length} 条结果`:'未查询到匹配公告');
+}
+function searchNotices(){ renderNoticeList(true,true); }
+function resetNoticeFilters(){
+  const ids=['noticeNameFilter','cycleIdFilter','publishFrom','publishTo','createdFrom','createdTo'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
+  const project=document.getElementById('projectFilter'); if(project) project.value='所属项目';
+  const mode=document.getElementById('publishModeFilter'); if(mode) mode.value='发布方式';
+  const status=document.getElementById('statusFilter'); if(status) status.value='公告状态';
+  const cycleStatus=document.getElementById('cycleStatusFilter'); if(cycleStatus) cycleStatus.value='循环状态';
+  const popup=document.getElementById('popupFilter'); if(popup) popup.value='有无弹窗';
+  renderNoticeList(false,true);
+  showToast('已重置筛选条件');
+}
+function applyNoticeFilters(){ renderNoticeList(false); }
+
+function showToast(message){
+  let toast=document.getElementById('pageToast');
+  if(!toast){
+    toast=document.createElement('div');
+    toast.id='pageToast';
+    toast.className='page-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent=message;
+  toast.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer=setTimeout(()=>toast.classList.remove('show'),1800);
+}
+
+function openModal(title,sub,body,primaryText,primaryHandler,cancelText){
+  modalTitle.textContent=title||'';
+  modalBody.innerHTML=body||'';
+  document.getElementById('modalFoot')?.classList.remove('hidden');
+  const closeBtn=document.getElementById('modalClose');
+  if(closeBtn){
+    closeBtn.classList.remove('hidden');
+    closeBtn.textContent=cancelText||'关闭';
+  }
+  if(primaryText){
+    modalPrimary.textContent=primaryText;
+    modalPrimary.classList.remove('hidden');
+    modalPrimary.onclick=primaryHandler||closeModal;
+  }else{
+    modalPrimary.classList.add('hidden');
+    modalPrimary.onclick=null;
+  }
+  modalMask.classList.remove('hidden');
+}
+
+function closeModal(event){
+  if(event && event.target!==modalMask) return;
+  modalMask.classList.add('hidden');
+  paramManagerOpen=false;
+  paramEditIndex=null;
+  langSyncOpen=false;
+  if(modalPanel) modalPanel.style.width='';
+  const closeBtn=document.getElementById('modalClose');
+  if(closeBtn) closeBtn.textContent='关闭';
+}
+
+let langSyncOpen=false;
+let langSyncSource='notice';
+
+function getLangSyncCurrentCode(){
+  return langSyncSource==='template'?(templateLang||DEFAULT_LANG):(lang||DEFAULT_LANG);
+}
+
+function openLangSync(source='notice'){
+  langSyncSource=source==='template'?'template':'notice';
+  langSyncOpen=true;
+  // 仅保存当前语言内容，不切换语言、不改动下层表单展示
+  if(langSyncSource==='template') saveTemplateLanguage();
+  else saveCopy();
+  const current=getLangSyncCurrentCode();
+  const currentName=langNames[current]||current;
+  const hint=langSyncSource==='template'
+    ?`将当前语言「${currentName}」下的模板标题、正文及弹窗内容同步到选中的其他语言。`
+    :`将当前语言「${currentName}」下的公告标题、正文及弹窗内容同步到选中的其他语言。`;
+  const items=LANGS.map(l=>{
+    const isCurrent=l.code===current;
+    return `<label class="lang-sync-item${isCurrent?' is-current':''}">
+      <input type="checkbox" class="lang-sync-check" value="${l.code}" ${isCurrent?'checked disabled':''} onchange="refreshLangSyncSelectAll()">
+      <span>${l.name}${isCurrent?'（当前）':''}</span>
+    </label>`;
+  }).join('');
+  const body=`
+    <div class="lang-sync-hint">${hint}</div>
+    <label class="check-row lang-sync-all"><input id="langSyncSelectAll" type="checkbox" onchange="toggleLangSyncSelectAll(this.checked)">全选其他语言</label>
+    <div class="lang-sync-grid">${items}</div>`;
+  if(modalPanel) modalPanel.style.width='min(720px,100%)';
+  openModal('选择要同步的语言','',body,'保存',confirmLangSync,'取消');
+}
+
+function toggleLangSyncSelectAll(checked){
+  document.querySelectorAll('.lang-sync-check:not([disabled])').forEach(el=>{el.checked=!!checked});
+}
+
+function refreshLangSyncSelectAll(){
+  const boxes=[...document.querySelectorAll('.lang-sync-check:not([disabled])')];
+  const all=document.getElementById('langSyncSelectAll');
+  if(all) all.checked=boxes.length>0 && boxes.every(b=>b.checked);
+}
+
+function confirmLangSync(){
+  if(langSyncSource==='template') saveTemplateLanguage();
+  else saveCopy();
+  const current=getLangSyncCurrentCode();
+  const targets=[...document.querySelectorAll('.lang-sync-check:checked:not([disabled])')].map(el=>el.value);
+  if(!targets.length){showToast('请选择要同步的语言');return;}
+  const bag=langSyncSource==='template'?templateDraftCopy:copy;
+  const src=deepCopy(bag[current]||{title:'',body:'',popup:''});
+  targets.forEach(code=>{
+    bag[code]={title:src.title||'',body:src.body||'',popup:src.popup||''};
+  });
+  langSyncOpen=false;
+  closeModal();
+  // 保持当前语言页签与输入框不变，仅刷新预览
+  if(langSyncSource==='template') renderTemplatePreview();
+  else renderPreview();
+  const names=targets.map(code=>langNames[code]||code).join('、');
+  showToast(`已同步到：${names}`);
+}
+
+function viewNotice(button){
+  const n=getNoticeFromButton(button);
+  if(!n)return;
+  if(modalPanel) modalPanel.style.width='min(640px,100%)';
+  const cycleBlock=n.cycleId?`
+    <div><span>循环状态</span><strong>${getCycleStatus(n)}</strong></div>
+    <div><span>循环规则</span><strong>${n.cycleSummary||'—'}</strong></div>`:`
+    <div><span>循环状态</span><strong>无循环</strong></div>`;
+  const body=`<div class="detail-grid">
+    <div><span>公告ID</span><strong>${n.noticeId}</strong></div>
+    <div><span>公告标题</span><strong>${n.name}</strong></div>
+    <div><span>所属项目</span><strong>${n.project}</strong></div>
+    <div><span>发布方式</span><strong>${n.publishMode}</strong></div>
+    <div><span>状态</span><strong>${n.status}</strong></div>
+    <div><span>发布时间</span><strong>${n.publishTime} ${BASE_TZ_LABEL}</strong></div>
+    <div><span>到期时间</span><strong>${n.expireTime==='长期有效'||n.expireTime==='下次发布前'?n.expireTime:`${n.expireTime} ${BASE_TZ_LABEL}`}</strong></div>
+    <div><span>弹窗</span><strong>${n.enablePopup?'有弹窗':'无弹窗'}</strong></div>
+    <div><span>弹窗循环</span><strong>${n.enablePopup?(n.popupCycleSummary||'不循环'):'—'}</strong></div>
+    <div><span>创建人</span><strong>${n.creator}</strong></div>
+    <div><span>创建时间</span><strong>${n.createdAt}</strong></div>
+    ${cycleBlock}
+  </div>`;
+  openModal('公告详情',n.name,body);
+}
+
+function viewOperationLog(button){
+  const n=getNoticeFromButton(button);
+  if(!n)return;
+  const rows=[
+    [n.creator,n.createdAt,`新增公告记录，状态为“${n.status}”`],
+    ['Jenny','2026-07-14 10:36','编辑公告内容'],
+    ['Admin','2026-07-13 18:22','配置多语言内容']
+  ];
+  const body=`
+    <div class="log-summary">
+      <strong>${n.name}</strong>
+      <span>共 ${rows.length} 条操作记录</span>
+    </div>
+    <div class="log-table-wrap">
+      <table class="log-table">
+        <thead><tr><th>操作人</th><th>操作时间</th><th>操作内容</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  openModal('操作日志',n.name,body);
+}
+
+function copyNotice(button,asNew){
+  const n=getNoticeFromButton(button);
+  if(!n)return;
+  editing=false;editingPublished=false;
+  editorTitle.textContent=asNew?'复制并新建':'复制公告';
+  resetEditor();
+  if(n.project)targetProject.value=n.project;
+  initTargetCheckPanels();
+  copy=ensureCopy(templates[0].copy);
+  const baseTitle=n.name||'公告';
+  if(copy.zhHant) copy.zhHant.title=baseTitle+' - 副本';
+  if(copy.en) copy.en.title=baseTitle+' - Copy';
+  noticeParams=ensureFixedParams(defaultParams);
+  lang=DEFAULT_LANG;
+  loadInputs();
+  renderNoticeParams();
+  publishMode.value=(n.publishMode.includes('即时')||n.publishMode.includes('立即'))?'immediate':'scheduled';
+  onPublishConfigChange();
+  restorePopupFieldsFromNotice(n);
+  showPage('editor');
+  setLang(DEFAULT_LANG);
+  showToast(asNew?'已复制为新建草稿，请修改后保存':'已复制公告内容，请修改后保存');
+}
+
+function cancelScheduledNotice(button){
+  const n=getNoticeFromButton(button);
+  if(!n||n.status!=='待发布')return;
+  if(modalPanel) modalPanel.style.width='min(420px,100%)';
+  openModal(
+    '取消公告',
+    '',
+    `<div class="confirm-text">确认取消该公告吗？取消后公告将不会按定时时间发布，且不可恢复。</div>`,
+    '确认取消',
+    ()=>{
+      n.status='已取消';
+      closeModal();
+      renderNoticeList(false);
+      showToast('公告已取消，不可恢复');
+    },
+    '返回'
+  );
+}
+
+function unshelfNotice(button){
+  const n=getNoticeFromButton(button);
+  if(!n||n.status!=='展示中')return;
+  const isCycle=!!n.cycleId&&getCycleStatus(n)==='循环中';
+  if(modalPanel) modalPanel.style.width='min(460px,100%)';
+  openModal(
+    '下架公告',
+    '',
+    `<div class="confirm-text">${isCycle
+      ?'确认下架当前公告吗？下架后公告立即从 APP 移除；循环规则仍保留，可继续编辑循环方式（公告ID不变）。'
+      :'确认下架当前公告吗？下架后公告将立即从 APP 移除，且不支持恢复上架。'}</div>`,
+    '确认下架',
+    ()=>{
+      n.status='已下架';
+      closeModal();
+      renderNoticeList(false);
+      showToast(isCycle?'公告已下架，循环规则仍可编辑':'公告已下架');
+    },
+    '返回'
+  );
+}
+
+function viewCycleRule(button){
+  const n=getNoticeFromButton(button);
+  if(!n?.cycleId)return;
+  const rule=cycleRules[n.cycleId]||{};
+  if(modalPanel) modalPanel.style.width='min(560px,100%)';
+  const body=`<div class="detail-grid">
+    <div><span>公告ID</span><strong>${n.noticeId}</strong></div>
+    <div><span>循环状态</span><strong>${rule.terminated?'已终止':'循环中'}</strong></div>
+    <div><span>循环规则</span><strong>${rule.summary||n.cycleSummary||'—'}</strong></div>
+    <div><span>有效期</span><strong>${rule.duration||'—'}</strong></div>
+    <div><span>规则详情</span><strong>${rule.detail||'—'}</strong></div>
+    <div><span>创建人</span><strong>${rule.creator||n.creator}</strong></div>
+    <div><span>创建时间</span><strong>${rule.createdAt||n.createdAt}</strong></div>
+  </div>
+  <div class="alert" style="margin-top:12px">公告ID统一为 A+4位流水号；循环为公告属性，修改循环方式不更换公告ID、不按期次拆分记录。</div>`;
+  openModal('查看循环规则',n.name,body);
+}
+
+function editFutureCycle(button){
+  const n=getNoticeFromButton(button);
+  if(!n?.cycleId)return;
+  const rule=cycleRules[n.cycleId];
+  if(!rule){showToast('未找到循环规则');return;}
+  if(rule.terminated){showToast('该循环已终止，无法修改');return;}
+  if(modalPanel) modalPanel.style.width='min(520px,100%)';
+  const body=`
+    <div class="confirm-text" style="margin-bottom:12px">修改循环规则后，本公告（ID 不变）将按新规则继续调度。</div>
+    <div class="field"><label class="label">循环规则摘要</label><input id="futureCycleSummary" class="control" value="${rule.summary||''}"></div>
+    <div class="field" style="margin-top:12px"><label class="label">有效期</label><input id="futureCycleDuration" class="control" value="${rule.duration||''}"></div>
+    <div class="field" style="margin-top:12px"><label class="label">规则详情</label><textarea id="futureCycleDetail" class="control" style="height:90px">${rule.detail||''}</textarea></div>`;
+  openModal('修改循环规则',n.noticeId,body,'保存修改',()=>{
+    const summary=document.getElementById('futureCycleSummary')?.value.trim();
+    const duration=document.getElementById('futureCycleDuration')?.value.trim();
+    const detail=document.getElementById('futureCycleDetail')?.value.trim();
+    if(!summary){alert('请填写循环规则摘要');return;}
+    rule.summary=summary;
+    rule.duration=duration||rule.duration;
+    rule.detail=detail||rule.detail;
+    n.cycleSummary=summary;
+    closeModal();
+    renderNoticeList(false);
+    showToast('循环规则已更新（公告ID不变）');
+  },'取消');
+}
+
+function terminateCycle(button){
+  const n=getNoticeFromButton(button);
+  if(!n?.cycleId)return;
+  const rule=cycleRules[n.cycleId];
+  if(rule?.terminated){showToast('该循环已终止');return;}
+  if(modalPanel) modalPanel.style.width='min(460px,100%)';
+  openModal(
+    '终止循环',
+    '',
+    `<div class="confirm-text">确认终止循环“${n.cycleSummary||n.noticeId}”吗？终止后<strong>不再按循环规则调度</strong>，当前公告状态不变、不会自动下架，公告ID保持不变。</div>`,
+    '确认终止',
+    ()=>{
+      if(rule) rule.terminated=true;
+      closeModal();
+      renderNoticeList(false);
+      showToast('已终止循环；当前公告状态未变更');
+    },
+    '返回'
+  );
+}
+
+function cancelEdit(){
+  const isCreate=!editing;
+  openModal(
+    isCreate?'取消新增':'取消编辑',
+    '',
+    `<div class="confirm-text">${isCreate
+      ?'当前内容将<strong>不会保存</strong>，确认取消并返回公告列表吗？'
+      :'未保存的修改将<strong>不会保存</strong>，确认取消并返回公告列表吗？'}</div>`,
+    '确认取消',
+    ()=>{
+      closeModal();
+      showPage('list');
+      showToast(isCreate?'已取消，内容未保存':'已取消编辑，修改未保存');
+    },
+    '继续编辑'
+  );
+}
+
+/* ========== 公告参数（弹窗维护，列表内联编辑；公告/模板共用） ========== */
+function getActiveParams(){
+  return paramSource==='template'?templateDraftParams:noticeParams;
+}
+
+function refreshActiveParamUI(){
+  if(paramSource==='template'){
+    renderTemplateTokenBars();
+    renderTemplatePreview();
+  }else{
+    renderTokenBar();
+    renderPreview();
+  }
+}
+
+function buildParamRowsHtml(){
+  const list=getActiveParams();
+  const rows=list.map((p,i)=>{
+    const np=normalizeParam(p);
+    if(paramEditIndex===i) return buildParamEditRowHtml(np,i);
+    const ops=isFixedParam(np)
+      ?`<span style="color:var(--muted);font-size:12px">不可修改</span>`
+      :`<div class="icon-actions">
+        <button class="btn compact" onclick="editNoticeParam(${i})">编辑</button>
+        <button class="btn compact" onclick="copyNoticeParam(${i})">复制</button>
+        <button class="btn compact" onclick="deleteNoticeParam(${i})">删除</button>
+      </div>`;
+    return `<tr>
+      <td class="mono">${paramToken(np.name)}</td>
+      <td>${np.desc||'—'}</td>
+      <td><span class="pill">${paramTypeLabel(np.type,np.precision)}</span></td>
+      <td>${formatParamTableValue(np)}</td>
+      <td>${ops}</td>
+    </tr>`;
+  }).join('');
+
+  const creating=paramEditIndex===-1?buildParamEditRowHtml({name:'',desc:'',type:'',precision:'',value:''},-1):'';
+  const addRow=paramEditIndex===null
+    ?`<tr><td colspan="5" style="text-align:center;padding:12px"><button class="btn" type="button" onclick="addNoticeParam()">＋ 新增</button></td></tr>`
+    :'';
+  return (rows||'')+creating+addRow;
+}
+
+function buildParamValueInputsHtml(p){
+  const type=p.type||'';
+  const precision=p.precision||'';
+  if(!type){
+    return `<span style="color:var(--muted);font-size:12px">请先选择参数类型</span>`;
+  }
+  if(!precision){
+    return `<span style="color:var(--muted);font-size:12px">请选择日期 / 日期时间 / 时间</span>`;
+  }
+  const inputType=paramInputType(precision);
+  if(type==='time_range'){
+    return `<div class="param-range">
+      <input id="npStart" class="control" type="${inputType}" value="${p.start||''}" style="height:34px">
+      <span class="range-mid">~</span>
+      <input id="npEnd" class="control" type="${inputType}" value="${p.end||''}" style="height:34px">
+    </div>`;
+  }
+  return `<input id="npTime" class="control" type="${inputType}" value="${p.value||''}" style="height:34px">`;
+}
+
+function buildParamPrecisionOptions(precision){
+  return `
+    <option value="" ${!precision?'selected':''}>请选择精度</option>
+    <option value="date" ${precision==='date'?'selected':''}>日期</option>
+    <option value="datetime" ${precision==='datetime'?'selected':''}>日期时间</option>
+    <option value="time" ${precision==='time'?'selected':''}>时间</option>
+  `;
+}
+
+function buildParamEditRowHtml(p,i){
+  const type=p.type||'';
+  const precision=p.precision||'';
+  return `<tr style="background:#fffbeb">
+    <td><input id="npName" class="control" placeholder="例如 start_time" value="${p.name||''}" style="height:34px"></td>
+    <td><input id="npDesc" class="control" placeholder="参数说明" value="${p.desc||''}" style="height:34px"></td>
+    <td>
+      <div class="param-type-stack">
+        <select id="npType" class="control" style="height:34px" onchange="toggleInlineParamType()">
+          <option value="" ${!type?'selected':''}>请选择类型</option>
+          <option value="time" ${type==='time'?'selected':''}>时间</option>
+          <option value="time_range" ${type==='time_range'?'selected':''}>时间区间</option>
+        </select>
+        <select id="npPrecision" class="control" style="height:34px" ${type?'':'disabled'} onchange="toggleInlineParamPrecision()">
+          ${buildParamPrecisionOptions(precision)}
+        </select>
+      </div>
+    </td>
+    <td id="npValueCell">${buildParamValueInputsHtml(p)}</td>
+    <td><div class="icon-actions">
+      <button class="btn primary compact" onclick="saveInlineParam(${i})">保存</button>
+      <button class="btn ghost compact" onclick="cancelInlineParam()">取消</button>
+    </div></td>
+  </tr>`;
+}
+
+function refreshInlineParamValueCell(clearValues=true){
+  const type=document.getElementById('npType')?.value||'';
+  const precision=document.getElementById('npPrecision')?.value||'';
+  const cell=document.getElementById('npValueCell');
+  if(!cell)return;
+  const base=clearValues
+    ?{type,precision,value:'',start:'',end:''}
+    :{type,precision,value:document.getElementById('npTime')?.value||'',start:document.getElementById('npStart')?.value||'',end:document.getElementById('npEnd')?.value||''};
+  cell.innerHTML=buildParamValueInputsHtml(base);
+}
+
+function toggleInlineParamType(){
+  const type=document.getElementById('npType')?.value||'';
+  const precisionSel=document.getElementById('npPrecision');
+  if(precisionSel){
+    precisionSel.disabled=!type;
+    if(!type) precisionSel.value='';
+    else if(!precisionSel.value) precisionSel.value='datetime';
+  }
+  refreshInlineParamValueCell(true);
+}
+
+function toggleInlineParamPrecision(){
+  refreshInlineParamValueCell(true);
+}
+
+function renderNoticeParams(){
+  syncCoreTimesFromConfig();
+  if(paramManagerOpen) openParamManager(paramSource);
+  renderTokenBar();
+  renderPreview();
+}
+
+function renderTokenBar(){
+  const html=noticeParams.length
+    ?noticeParams.map(p=>`<button class="token" onclick="insertToken('${paramToken(p.name)}','body')" title="${paramToken(p.name)}">${p.desc||p.name}</button>`).join('')
+    :'<span style="color:var(--muted);font-size:12px">请先在参数管理中新增参数</span>';
+  const popupHtml=noticeParams.length
+    ?noticeParams.map(p=>`<button class="token" onclick="insertToken('${paramToken(p.name)}','popup')" title="${paramToken(p.name)}">${p.desc||p.name}</button>`).join('')
+    :'<span style="color:var(--muted);font-size:12px">请先在参数管理中新增参数</span>';
+  const bar=document.getElementById('tokenBar');
+  const popupBar=document.getElementById('popupTokenBar');
+  if(bar) bar.innerHTML=html;
+  if(popupBar) popupBar.innerHTML=popupHtml;
+}
+
+function openParamManager(source){
+  if(source==='template'||source==='notice') paramSource=source;
+  paramManagerOpen=true;
+  modalPanel.style.width='min(980px,100%)';
+  const body=`
+    <div class="log-table-wrap">
+      <table class="log-table">
+        <thead><tr><th style="width:140px">参数名称</th><th style="width:110px">参数说明</th><th style="width:150px">参数类型</th><th>参数值</th><th style="width:210px">操作</th></tr></thead>
+        <tbody>${buildParamRowsHtml()}</tbody>
+      </table>
+    </div>`;
+  openModal(paramSource==='template'?'模板参数管理':'参数管理','',body);
+  if(modalTitle){
+    const title=paramSource==='template'?'模板参数管理':'参数管理';
+    modalTitle.innerHTML=`${title}<span class="title-tz-hint">当前基准时区：${BASE_TZ_LABEL}</span>`;
+  }
+  document.getElementById('modalFoot')?.classList.add('hidden');
+}
+
+function readInlineParamForm(){
+  const name=(document.getElementById('npName')?.value||'').trim().replace(/[{}\s]/g,'');
+  if(!name){showToast('请填写参数名称');return null;}
+  const desc=(document.getElementById('npDesc')?.value||'').trim();
+  const type=document.getElementById('npType')?.value||'';
+  if(!type){showToast('请先选择参数类型');return null;}
+  const precision=document.getElementById('npPrecision')?.value||'';
+  if(!precision){showToast('请选择日期 / 日期时间 / 时间');return null;}
+  if(type==='time'){
+    let value=document.getElementById('npTime')?.value||'';
+    if(precision==='time') value=value.slice(0,5);
+    if(!value){showToast(precision==='date'?'请填写参数日期':'请填写参数时间');return null;}
+    return {name,desc,type,precision,value};
+  }
+  let start=document.getElementById('npStart')?.value||'';
+  let end=document.getElementById('npEnd')?.value||'';
+  if(precision==='time'){start=start.slice(0,5);end=end.slice(0,5);}
+  if(!start||!end){
+    showToast(precision==='date'?'请填写日期区间':precision==='time'?'请填写时间区间':'请填写日期时间区间');
+    return null;
+  }
+  if(precision==='time'){
+    if(start===end){showToast('结束时间不能与开始时间相同');return null;}
+  }else if(end<=start){
+    showToast('结束值必须晚于开始值');
+    return null;
+  }
+  return {name,desc,type,precision,start,end};
+}
+
+function addNoticeParam(){
+  if(paramEditIndex!==null){showToast('请先完成当前参数编辑');return;}
+  paramEditIndex=-1;
+  openParamManager(paramSource);
+  setTimeout(()=>document.getElementById('npType')?.focus(),30);
+}
+
+function copyNoticeParam(i){
+  if(paramEditIndex!==null){showToast('请先完成当前参数编辑');return;}
+  const list=getActiveParams();
+  const src=list[i];
+  if(!src||isFixedParam(src)){showToast('固定参数不可复制');return;}
+  const np=normalizeParam(src);
+  let baseName=np.name+'_copy';
+  let n=1;
+  while(list.some(p=>p.name===baseName)||FIXED_PARAM_NAMES.has(baseName)){
+    baseName=np.name+'_copy'+(n++);
+  }
+  const cloned=deepCopy(np);
+  cloned.name=baseName;
+  cloned.desc=(np.desc||np.name)+' 副本';
+  list.push(cloned);
+  openParamManager(paramSource);
+  refreshActiveParamUI();
+  showToast('已复制参数类型：'+paramTypeLabel(cloned.type,cloned.precision));
+}
+
+function editNoticeParam(i){
+  if(paramEditIndex!==null){showToast('请先完成当前参数编辑');return;}
+  const p=getActiveParams()[i];
+  if(isFixedParam(p)){showToast('固定参数不可修改');return;}
+  paramEditIndex=i;
+  openParamManager(paramSource);
+  setTimeout(()=>document.getElementById('npName')?.focus(),30);
+}
+
+function saveInlineParam(i){
+  const p=readInlineParamForm();
+  if(!p)return;
+  if(FIXED_PARAM_NAMES.has(p.name)){showToast('「'+p.name+'」为固定参数，不可占用');return;}
+  const list=getActiveParams();
+  if(i===-1){
+    if(list.some(x=>x.name===p.name)){showToast('参数名称已存在');return;}
+    list.push(p);
+    showToast('参数已新增，可在正文中插入 '+paramToken(p.name));
+  }else{
+    if(isFixedParam(list[i])){showToast('固定参数不可修改');return;}
+    if(list.some((x,idx)=>idx!==i&&x.name===p.name)){showToast('参数名称已存在');return;}
+    list[i]=p;
+    showToast('参数已更新');
+  }
+  paramEditIndex=null;
+  openParamManager(paramSource);
+  refreshActiveParamUI();
+}
+
+function cancelInlineParam(){
+  paramEditIndex=null;
+  openParamManager(paramSource);
+}
+
+function deleteNoticeParam(i){
+  if(paramEditIndex!==null){showToast('请先完成当前参数编辑');return;}
+  const p=getActiveParams()[i];
+  if(isFixedParam(p)){showToast('固定参数不可删除');return;}
+  getActiveParams().splice(i,1);
+  openParamManager(paramSource);
+  refreshActiveParamUI();
+  showToast('参数已删除');
+}
+
+/* ========== 公告模板 ========== */
+function renderTemplates(){
+  const rows=document.getElementById('templateRows');
+  rows.innerHTML=templates.length?templates.map(t=>{
+    const enabled=t.enabled!==false;
+    const hasPopup=!!t.enablePopup;
+    return `<tr class="${enabled?'':'is-disabled'}">
+    <td>${t.name}</td>
+    <td>${t.desc||'—'}</td>
+    <td><span class="pill ${hasPopup?'ok':'draft'}">${hasPopup?'有弹窗':'无弹窗'}</span></td>
+    <td>${t.creator||'Admin'}</td>
+    <td>${formatListDisplayTime(t.updated)}</td>
+    <td><span class="pill ${enabled?'ok':'draft'}">${enabled?'启用':'停用'}</span></td>
+    <td>${buildTemplateActionButtons(t.id,enabled)}</td>
+  </tr>`;
+  }).join('')
+  :'<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px">暂无模板</td></tr>';
+}
+
+function buildTemplateActionButtons(id,enabled){
+  const isOn=enabled!==false;
+  return `<div class="icon-actions">
+    <label class="shelf-action" title="${isOn?'停用模板':'启用模板'}">
+      <span class="shelf-switch"><input type="checkbox" ${isOn?'checked':''} onchange="toggleTemplateEnabled(${id},this)"><span class="shelf-slider"></span></span>
+      <span class="shelf-text">${isOn?'启用':'停用'}</span>
+    </label>
+    <button class="icon-btn" title="引用模板发送" aria-label="引用模板发送" ${isOn?'':'disabled'} onclick="createFromTemplate(${id})"><svg viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9 22 2z"/></svg></button>
+    <button class="icon-btn" title="编辑" aria-label="编辑" onclick="openTemplateEditor(${id})"><svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="m14 8 3 3"/></svg></button>
+    <button class="icon-btn danger" title="删除" aria-label="删除" onclick="deleteTemplate(${id})"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
+  </div>`;
+}
+
+function toggleTemplateEnabled(id,input){
+  const t=templates.find(x=>x.id===id);
+  if(!t||!input)return;
+  const willEnable=input.checked;
+  const action=willEnable?'启用':'停用';
+  input.checked=!willEnable;
+  if(modalPanel) modalPanel.style.width='min(420px,100%)';
+  openModal(
+    `确认${action}模板`,
+    '',
+    `<div class="confirm-text">确认${action}模板 <strong>${t.name}</strong> 吗？${willEnable?'启用后可在新增公告时引用。':'停用后将不可再引用该模板创建公告。'}</div>`,
+    '确定',
+    ()=>{
+      t.enabled=willEnable;
+      renderTemplates();
+      fillTemplateSelect();
+      closeModal();
+      showToast(`模板已${action}`);
+    },
+    '取消'
+  );
+}
+
+function saveTemplateLanguage(){
+  if(!templateTitleInput||!templateLang)return;
+  if(!templateDraftCopy[templateLang]) templateDraftCopy[templateLang]={title:'',body:'',popup:''};
+  templateDraftCopy[templateLang].title=templateTitleInput.value;
+  templateDraftCopy[templateLang].body=templateBodyInput.value;
+  if(templatePopupInput) templateDraftCopy[templateLang].popup=templatePopupInput.value;
+  templateEnablePopupDisplay=!!(templateEnablePopupCheck?.checked);
+}
+
+function setTemplateLanguage(nextLang){
+  saveTemplateLanguage();
+  templateLang=nextLang||DEFAULT_LANG;
+  if(!templateDraftCopy[templateLang]) templateDraftCopy[templateLang]={title:'',body:'',popup:''};
+  templateTitleInput.value=templateDraftCopy[templateLang].title||'';
+  templateBodyInput.value=templateDraftCopy[templateLang].body||'';
+  if(templatePopupInput) templatePopupInput.value=templateDraftCopy[templateLang].popup||'';
+  if(templateEnablePopupCheck) templateEnablePopupCheck.checked=!!templateEnablePopupDisplay;
+  const templatePreviewLangEl=document.getElementById('templatePreviewLang');
+  if(templatePreviewLangEl) templatePreviewLangEl.value=templateLang;
+  document.querySelectorAll('#templateLangTabs .tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.templateLang===templateLang));
+  syncTemplatePopupReminderUI(false);
+  renderTemplatePreview();
+}
+
+['templateTitleInput','templateBodyInput','templatePopupInput'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.oninput=()=>{saveTemplateLanguage();renderTemplatePreview()};
+});
+
+function resolveTemplateParams(text,tz){
+  const displayTz=tz||previewTz||baseTz;
+  let out=text||'';
+  templateDraftParams.forEach(p=>{
+    out=out.replaceAll(paramToken(p.name),formatParamDisplay(p,displayTz));
+  });
+  return out;
+}
+
+function onTemplatePopupReminderChange(fromUser=true){
+  templateEnablePopupDisplay=!!(templateEnablePopupCheck?.checked);
+  syncTemplatePopupReminderUI(fromUser);
+}
+function syncTemplatePopupReminderUI(fromUser=true){
+  if(templateEnablePopupCheck) templateEnablePopupCheck.checked=!!templateEnablePopupDisplay;
+  const bodyPanel=document.getElementById('templateBodyContentPanel');
+  const popupPanel=document.getElementById('templatePopupContentPanel');
+  if(bodyPanel) bodyPanel.classList.remove('hidden');
+  if(popupPanel) popupPanel.classList.toggle('hidden',!templateEnablePopupDisplay);
+  if(!templateEnablePopupDisplay&&templatePreviewMode==='popup') templatePreviewMode='body';
+  syncTemplatePreviewModeUI();
+  if(fromUser){saveTemplateLanguage();renderTemplatePreview()}
+}
+function toggleTemplatePopupContent(fromUser=true){
+  onTemplatePopupReminderChange(fromUser);
+}
+
+function setTemplatePreviewMode(mode){
+  if(mode==='popup'&&!templateEnablePopupDisplay){
+    showToast('请先勾选「弹窗提醒」');
+    return;
+  }
+  templatePreviewMode=mode==='popup'?'popup':'body';
+  syncTemplatePreviewModeUI();
+  renderTemplatePreview();
+}
+
+function syncTemplatePreviewModeUI(){
+  const bodyBtn=document.getElementById('templatePreviewModeBodyBtn');
+  const popupBtn=document.getElementById('templatePreviewModePopupBtn');
+  if(!templateEnablePopupDisplay&&templatePreviewMode==='popup') templatePreviewMode='body';
+  if(popupBtn){
+    popupBtn.disabled=!templateEnablePopupDisplay;
+    popupBtn.title=templateEnablePopupDisplay?'切换到弹窗预览':'请先勾选「弹窗提醒」';
+  }
+  if(bodyBtn) bodyBtn.classList.toggle('active',templatePreviewMode==='body');
+  if(popupBtn) popupBtn.classList.toggle('active',templatePreviewMode==='popup');
+  if(templatePreviewBodyView) templatePreviewBodyView.classList.toggle('hidden',templatePreviewMode==='popup');
+  if(templatePreviewPopupView) templatePreviewPopupView.classList.toggle('hidden',templatePreviewMode!=='popup');
+}
+
+function renderTemplatePreview(){
+  if(!templatePreviewTitle)return;
+  saveTemplateLanguage();
+  syncTemplatePreviewModeUI();
+  const tz=previewTz||LOCAL_TZ||baseTz;
+  const langKey=templateLang||DEFAULT_LANG;
+  const c=templateDraftCopy[langKey]||{};
+  const titleText=(resolveTemplateParams(c.title||'',tz)||'').trim();
+  const bodyText=(resolveTemplateParams(c.body||'',tz)||'').trim();
+  const popupText=(resolveTemplateParams(c.popup||'',tz)||'').trim();
+  templatePreviewTitle.textContent=titleText||'请填写公告标题';
+  templatePreviewTitle.style.display='';
+  templatePreviewTitle.classList.toggle('is-placeholder',!titleText);
+  templatePreviewBody.textContent=bodyText||'请输入公告正文';
+  templatePreviewBody.style.display='';
+  templatePreviewBody.classList.toggle('is-placeholder',!bodyText);
+  if(templatePreviewPopup){
+    templatePreviewPopup.textContent=popupText||'请填写弹窗展示内容';
+    templatePreviewPopup.style.display='';
+    templatePreviewPopup.classList.toggle('is-placeholder',!popupText);
+  }
+  if(templatePreviewPopupTitle){
+    templatePreviewPopupTitle.textContent=titleText||'请填写公告标题';
+    templatePreviewPopupTitle.style.display='';
+    templatePreviewPopupTitle.classList.toggle('is-placeholder',!titleText);
+  }
+}
+
+function openTemplateEditor(id){
+  const t=id?templates.find(x=>x.id===id):null;
+  editingTemplateId=t?t.id:null;
+  templateEditorTitle.textContent=t?'编辑公告模板':'新增公告模板';
+  templateDraftCopy=ensureCopy(t?t.copy:null);
+  templateDraftParams=ensureFixedParams(t?t.params||[]:[]);
+  templateEnablePopupDisplay=!!(t&&t.enablePopup);
+  templatePreviewMode='body';
+  if(templateEnablePopupCheck) templateEnablePopupCheck.checked=!!templateEnablePopupDisplay;
+  templateLang=null;
+  paramSource='template';
+  paramEditIndex=null;
+  paramManagerOpen=false;
+  if(modalMask) modalMask.classList.add('hidden');
+  showPage('templateEditor');
+  setTemplateLanguage(DEFAULT_LANG);
+  syncTemplatePopupReminderUI(false);
+  renderTemplateTokenBars();
+}
+
+function renderTemplateTokenBars(){
+  const empty='<span style="color:var(--muted);font-size:12px">请先在参数管理中新增参数</span>';
+  const bodyHtml=templateDraftParams.length
+    ?templateDraftParams.map(p=>`<button class="token" type="button" onclick="insertTemplateToken('${paramToken(p.name)}','body')" title="${paramToken(p.name)}">${p.desc||p.name}</button>`).join('')
+    :empty;
+  const popupHtml=templateDraftParams.length
+    ?templateDraftParams.map(p=>`<button class="token" type="button" onclick="insertTemplateToken('${paramToken(p.name)}','popup')" title="${paramToken(p.name)}">${p.desc||p.name}</button>`).join('')
+    :empty;
+  const bodyBar=document.getElementById('templateTokenBar');
+  const popupBar=document.getElementById('templatePopupTokenBar');
+  if(bodyBar) bodyBar.innerHTML=bodyHtml;
+  if(popupBar) popupBar.innerHTML=popupHtml;
+}
+
+function insertTemplateToken(token,target='body'){
+  const el=target==='popup'?templatePopupInput:templateBodyInput;
+  if(!el)return;
+  const start=el.selectionStart,end=el.selectionEnd;
+  el.value=el.value.slice(0,start)+token+el.value.slice(end);
+  el.focus();
+  el.selectionStart=el.selectionEnd=start+token.length;
+  saveTemplateLanguage();
+  renderTemplatePreview();
+}
+
+function saveTemplate(){
+  saveTemplateLanguage();
+  const missingTitle=findMissingLang(templateDraftCopy,['title']);
+  if(missingTitle){showToast('请完善 '+missingTitle.name+' 的标题');setTemplateLanguage(missingTitle.code);return}
+  const missingBody=findMissingLang(templateDraftCopy,['body']);
+  if(missingBody){showToast('请完善 '+missingBody.name+' 的正文');setTemplateLanguage(missingBody.code);return}
+  if(templateEnablePopupDisplay){
+    const missingPopup=findMissingLang(templateDraftCopy,['popup']);
+    if(missingPopup){showToast('已勾选弹窗提醒，请完善 '+missingPopup.name+' 的弹窗展示内容');setTemplateLanguage(missingPopup.code);return}
+  }
+  const name=primaryCopyTitle(templateDraftCopy);
+  if(!name){showToast('请填写模板标题');return}
+  const updated=new Date().toISOString().slice(0,16).replace('T',' ');
+  const existing=templates.find(x=>x.id===editingTemplateId);
+  if(existing){
+    existing.name=name;
+    existing.copy=ensureCopy(templateDraftCopy);
+    existing.params=stripFixedParams(templateDraftParams);
+    existing.enablePopup=!!templateEnablePopupDisplay;
+    existing.updated=updated;
+    if(existing.enabled===undefined) existing.enabled=true;
+  }else{
+    templates.push({
+      id:templateSeq++,
+      name,
+      desc:'',
+      creator:'Admin',
+      updated,
+      enabled:true,
+      enablePopup:!!templateEnablePopupDisplay,
+      copy:ensureCopy(templateDraftCopy),
+      params:stripFixedParams(templateDraftParams)
+    });
+  }
+  fillTemplateSelect();
+  showPage('templates');
+  showToast(existing?'模板已更新':'模板已创建');
+}
+
+function deleteTemplate(id){
+  const t=templates.find(x=>x.id===id);
+  openModal('删除模板',t.name,`<div class="confirm-text">确认删除模板 <strong>${t.name}</strong> 吗？已引用该模板创建的公告不受影响。</div>`,'确认删除',()=>{
+    templates=templates.filter(x=>x.id!==id);
+    renderTemplates();
+    fillTemplateSelect();
+    closeModal();
+    showToast('模板已删除');
+  });
+}
+
+function fillTemplateSelect(){
+  const sel=document.getElementById('editorTplSelect');
+  if(!sel)return;
+  const cur=sel.value;
+  const wantPopup=!!enablePopupDisplay;
+  const enabledTemplates=templates.filter(t=>t.enabled!==false&&!!t.enablePopup===wantPopup);
+  sel.innerHTML='<option value="">不使用模板</option>'+enabledTemplates.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  if(cur && enabledTemplates.some(t=>String(t.id)===String(cur))) sel.value=cur;
+  else sel.value='';
+}
+
+function applyTemplate(t){
+  copy=ensureCopy(t.copy);
+  noticeParams=ensureFixedParams(t.params||[]);
+  enablePopupDisplay=!!t.enablePopup;
+  if(enablePopupCheck) enablePopupCheck.checked=enablePopupDisplay;
+  previewMode='body';
+  paramSource='notice';
+  loadInputs();
+  syncPopupReminderUI(false);
+  fillTemplateSelect();
+  const sel=document.getElementById('editorTplSelect');
+  if(sel) sel.value=String(t.id);
+  renderNoticeParams();
+  document.querySelectorAll('#editorLangTabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.lang===lang));
+  renderPreview();
+}
+
+function applyTemplateFromEditor(id){
+  if(!id){
+    showToast('已取消模板引用，当前内容与参数保留');
+    return;
+  }
+  const t=templates.find(x=>x.id===Number(id));
+  if(!t)return;
+  if(t.enabled===false){
+    showToast('该模板已停用，无法引用');
+    fillTemplateSelect();
+    return;
+  }
+  if(!!t.enablePopup!==!!enablePopupDisplay){
+    showToast(enablePopupDisplay?'当前已勾选弹窗提醒，只能选择含弹窗的模板':'未勾选弹窗提醒，只能选择不含弹窗的模板');
+    fillTemplateSelect();
+    return;
+  }
+  applyTemplate(t);
+  showToast('已沿用模板「'+t.name+'」的文案与参数');
+}
+
+function createFromTemplate(id){
+  const t=templates.find(x=>x.id===id);
+  if(!t)return;
+  if(t.enabled===false){
+    showToast('该模板已停用，无法引用创建公告');
+    return;
+  }
+  editing=false;editingPublished=false;
+  editorTitle.textContent='新增公告（引用模板）';
+  resetEditor();
+  enablePopupDisplay=!!t.enablePopup;
+  if(enablePopupCheck) enablePopupCheck.checked=enablePopupDisplay;
+  fillTemplateSelect();
+  applyTemplate(t);
+  showPage('editor');
+  setLang(DEFAULT_LANG);
+  showToast('已基于模板「'+t.name+'」创建，已沿用其参数与设置');
+}
+
+function statusClassName(status){
+  return status==='展示中'?'ok'
+    :status==='待发布'?'warn'
+    :status==='已下架'?'off'
+    :status==='已取消'?'cancel'
+    :status==='已归档'?'draft'
+    :'draft';
+}
+
+function getCycleStatus(n){
+  if(!n.cycleId) return '无循环';
+  return cycleRules[n.cycleId]?.terminated?'已终止':'循环中';
+}
+
+function cycleStatusClassName(cycleStatus){
+  return cycleStatus==='循环中'?'cycle-on'
+    :cycleStatus==='已终止'?'cycle-off'
+    :'cycle-none';
+}
+
+const ACTION_ICONS={
+  edit:`<svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="m14 8 3 3"/></svg>`,
+  copy:`<svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>`,
+  cancel:`<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M9 12h6"/></svg>`,
+  unshelf:`<svg viewBox="0 0 24 24"><path d="M21 8v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8"/><path d="M23 8H1l2.4-4.8A2 2 0 0 1 5.2 2h13.6a2 2 0 0 1 1.8 1.2L23 8Z"/><path d="M10 12h4"/></svg>`,
+  terminate:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12h6"/></svg>`,
+  log:`<svg viewBox="0 0 24 24"><path d="M8 6h11"/><path d="M8 12h11"/><path d="M8 18h11"/><path d="M4 6h.01"/><path d="M4 12h.01"/><path d="M4 18h.01"/></svg>`
+};
+
+function iconActionBtn(title,onclick,icon,danger){
+  return `<button type="button" class="icon-btn${danger?' danger':''}" title="${title}" aria-label="${title}" onclick="${onclick}">${icon}</button>`;
+}
+
+function buildActionButtons(n){
+  const status=n.status;
+  const cycleStatus=getCycleStatus(n);
+  const btns=[];
+  // 编辑 → 复制 → 取消/下架/终止 → 日志
+  if(status==='待发布'||status==='展示中'){
+    btns.push(iconActionBtn('编辑',`openEdit(this)`,ACTION_ICONS.edit));
+  }
+  btns.push(iconActionBtn('复制',`copyNotice(this)`,ACTION_ICONS.copy));
+  if(status==='待发布'){
+    btns.push(iconActionBtn('取消',`cancelScheduledNotice(this)`,ACTION_ICONS.cancel,true));
+  }
+  if(status==='展示中'){
+    btns.push(iconActionBtn('下架',`unshelfNotice(this)`,ACTION_ICONS.unshelf,true));
+  }
+  if(cycleStatus==='循环中'){
+    btns.push(iconActionBtn('终止',`terminateCycle(this)`,ACTION_ICONS.terminate,true));
+  }
+  btns.push(iconActionBtn('日志',`viewOperationLog(this)`,ACTION_ICONS.log));
+  return `<div class="icon-actions">${btns.join('')}</div>`;
+}
+
+function currentCreatedAt(){
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+function buildNoticeRow(n){
+  const expire=formatListDisplayTime(n.expireTime||'—');
+  const cycleStatus=getCycleStatus(n);
+  const hasPopup=!!n.enablePopup;
+  const popupPill=`<span class="pill ${hasPopup?'ok':'draft'}">${hasPopup?'有弹窗':'无弹窗'}</span>`;
+  const popupCycle=hasPopup?(n.popupCycleSummary||'不循环'):'—';
+  return `<td><span class="mono">${n.noticeId}</span></td><td>${n.name}</td><td>${n.project}</td><td>${n.publishMode}</td><td>${formatListDisplayTime(n.publishTime)}</td><td>${expire}</td><td><span class="pill ${statusClassName(n.status)}">${n.status}</span></td><td><span class="pill ${cycleStatusClassName(cycleStatus)}">${cycleStatus}</span></td><td>${popupPill}</td><td>${popupCycle}</td><td>${n.creator}</td><td>${formatListDisplayTime(n.createdAt)}</td><td>${buildActionButtons(n)}</td>`;
+}
+
+function renderSampleNotices(){
+  renderNoticeList(false);
+}
+
+try{
+  initPreviewTzSelects();
+  renderSampleNotices();
+  renderLangSwitchers();
+  initTargetCheckPanels();
+  noticeParams=ensureFixedParams(defaultParams);
+  fillTemplateSelect();
+  loadInputs();
+  renderNoticeParams();
+  onPublishConfigChange();
+  setLang(DEFAULT_LANG);
+  showPage('list');
+}catch(err){
+  console.error('页面初始化失败',err);
+  try{ renderSampleNotices(); showPage('list'); }catch(_e){}
+}
+
+</script>
+</body>
+</html>
